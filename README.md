@@ -31,7 +31,7 @@ Example Configuration
     splunk_username: username
     splunk_password: super_secure_password
     splunk_api_port: 8089
-    splunk_index: perception_index`
+    splunk_index: perception_index
 
 PostgreSQL 8.4 and ^ is supported.
 
