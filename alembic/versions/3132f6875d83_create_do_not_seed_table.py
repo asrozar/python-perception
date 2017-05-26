@@ -1,7 +1,7 @@
 """create do_not_seeds table
 
 Revision ID: 3132f6875d83
-Revises: 7c34e9a89bc0
+Revises: 65df8acfcffc
 Create Date: 2017-05-18 11:00:29.781865
 
 """
@@ -17,7 +17,7 @@ def _get_date():
 
 # revision identifiers, used by Alembic.
 revision = '3132f6875d83'
-down_revision = '7c34e9a89bc0'
+down_revision = '65df8acfcffc'
 branch_labels = None
 depends_on = None
 

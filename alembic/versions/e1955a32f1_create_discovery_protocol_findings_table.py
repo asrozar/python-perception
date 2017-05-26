@@ -1,14 +1,14 @@
 """create discovery_protocol_findings table
 
 Revision ID: e1955a32f1
-Revises: 392c3a6e915
+Revises: 42122ee941b2
 Create Date: 2015-06-25 13:00:36.962406
 
 """
 
 # revision identifiers, used by Alembic.
 revision = 'e1955a32f1'
-down_revision = '392c3a6e915'
+down_revision = '42122ee941b2'
 branch_labels = None
 depends_on = None
 

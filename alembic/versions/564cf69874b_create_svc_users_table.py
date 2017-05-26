@@ -1,14 +1,14 @@
 """create svc_users table
 
 Revision ID: 564cf69874b
-Revises: 42220a53132
+Revises: 
 Create Date: 2015-06-23 16:45:18.964546
 
 """
 
 # revision identifiers, used by Alembic.
 revision = '564cf69874b'
-down_revision = '42220a53132'
+down_revision = None
 branch_labels = None
 depends_on = None
 

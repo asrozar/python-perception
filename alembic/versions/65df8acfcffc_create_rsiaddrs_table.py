@@ -1,7 +1,7 @@
 """create rsaddrs table
 
 Revision ID: 65df8acfcffc
-Revises: e28ef9fa363c
+Revises: 4e051e1c257
 Create Date: 2017-04-16 13:42:28.371479
 
 """
@@ -12,7 +12,7 @@ import datetime
 
 # revision identifiers, used by Alembic.
 revision = '65df8acfcffc'
-down_revision = 'e28ef9fa363c'
+down_revision = '4e051e1c257'
 branch_labels = None
 depends_on = None
 
