@@ -5,9 +5,33 @@ Perception is a tool used to gain better network visibility by pulling LAN infor
 network devices. Inventory information is indexed using Splunk.
 
 
-First thing to do is edit the app/config/database.yml file.
+First thing to do is edit the app/config/configuration.yml file. Either store it in `/etc/perception/configuration.yml`
+or set the `PERCEPTION_CONFIG` env variable.
 
-Add host, database, user, and password.
+###Example Configuration
+
+    # Database Info
+    drivername: postgres
+    host: localhost
+    database: perception_db
+    username: perception_user
+    password: perception_passwd
+
+    # Application Info
+    discovery_mode: passive
+
+    # You should not use this
+    # Setup PKI and stop being lazy!
+    # Svc Account password
+    # svc_account_passwd: insecure_password
+
+    # Splunk Indexer Info
+    splunk_inder: False
+    splunk_host: host
+    splunk_username: username
+    splunk_password: super_secure_password
+    splunk_api_port: 8089
+    splunk_api_index: perception_index`
 
 PostgreSQL 8.4 and ^ is supported.
 
