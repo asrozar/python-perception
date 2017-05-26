@@ -8,7 +8,7 @@ network devices. Inventory information is indexed using Splunk.
 First thing to do is edit the app/config/configuration.yml file. Either store it in `/etc/perception/configuration.yml`
 or set the `PERCEPTION_CONFIG` env variable.
 
-###Example Configuration
+##Example Configuration
 
     # Database Info
     drivername: postgres
