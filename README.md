@@ -26,7 +26,7 @@ tool.
     
         # sudo ./perceptiond.py start | stop | restart
 
-    The Daemon manages three process. The SeedStarter(), DiscoveryProtocolSpider(), and RSInventorySpider().
+    The Daemon manages three process. The SeedStarter(), DiscoveryProtocolSpider(), and RSInventoryUpdater().
     It is required that the service accounts used for for Perception are configured to use
     `SSH public key authentication`. You can find configuration examples here:[NSRC_ORG](https://nsrc.org/workshops/2016/apricot2016/raw-attachment/wiki/Track5Wireless/cisco-ssh-auth.htm)
     and here: [Cisco Support Forum](https://supportforums.cisco.com/document/110946/ssh-using-public-key-authentication-ios-and-big-outputs).
