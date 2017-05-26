@@ -1,17 +1,12 @@
 import readline
 from app import db_session, nmap_tmp_dir, home_dir, splunk_sock
 from subprocess import call, Popen, PIPE
-from app.database.models import LocalHost,\
-    OpenvasAdmin,\
+from app.database.models import OpenvasAdmin,\
     OpenvasLastUpdate,\
     SvcUser,\
     SeedRouter,\
-    InventoryHost,\
-    InventorySvc, \
     RSInfrastructure, \
-    DiscoveryProtocolFinding,\
-    LocalSubnets
-from app.lib.export_reporter import ExportToXLSX
+    DiscoveryProtocolFinding
 from sqlalchemy.exc import IntegrityError
 from re import match
 from socket import gethostbyaddr, herror
@@ -50,16 +45,16 @@ class TabCompletion(object):
 # -------------------------------------------------------------------------------
 
 
-def get_hosts_to_scan():
+#def get_hosts_to_scan():
 
-    hosts = db_session.query(LocalHost).all()
-    if hosts:
-        hosts_to_scan = []
+#    hosts = db_session.query(LocalHost).all()
+#    if hosts:
+#        hosts_to_scan = []
 
-        for host in hosts:
-            hosts_to_scan.append(host.ip_addr)
+#        for host in hosts:
+#            hosts_to_scan.append(host.ip_addr)
 
-        return hosts_to_scan
+#        return hosts_to_scan
 
 
 def split_commands(command):
@@ -144,13 +139,9 @@ def display_show_help():
     print('')
     print('infrastructure           Display all Route Switch Infrastructure.')
     print('firewalls                Display all Firewall Infrastructure.')
-    print('local_hosts              Display all local_hosts.')
-    print('local_subnets            Display all local_subnets.')
-    print('inventory                Display all inventory.')
     print('seeds                    Display all seed hosts.')
     print('openvas                  Display openvas configuration.')
     print('nmap                     Display nmap configuration.')
-    print('discovery                Display discovery configuration.')
     print('all                      Display all show data.')
     print_underscore()
 
@@ -161,24 +152,14 @@ def display_help(mode):
         print('')
         print('config               Enter configuration mode.')
         print('show                 Display data.')
-        print('run discovery        Use the local_hosts database to run network discovery.')
-        print('export               Export data for reporting')
         print_underscore()
 
     if mode == '(config)#':
         print('')
-        print('local_hosts          Configure local_hosts')
         print('nmap                 Configure Nmap options.')
         print('openvas              Configure OpenVas options.')
         print('seeds                Configure a seed router to automatically populate local_hosts.')
         print('show                 Show data.')
-        print_underscore()
-
-    if mode == '(config/local_hosts)#':
-        print('')
-        print('add                      Add local_hosts, Example: add 10.1.1.1 10.5.0.0/24 192.168.1.10')
-        print('no                       Remove local_hosts, Example: no [ip_addr/cider]')
-        print('clear local_hosts        Remove all the local_hosts, Example: clear local_hosts')
         print_underscore()
 
     if mode == '(config/nmap)#':
@@ -201,44 +182,6 @@ def display_help(mode):
         print('add              Add a seed router, Example: add [ip_addr]')
         print('no               Remove seed router, Example: no [ip_addr]')
         print_underscore()
-
-
-def show_local_hosts():
-
-    local_hosts = db_session.query(LocalHost).all()
-
-    if local_hosts:
-
-        if local_hosts:
-
-            show_display('Local hosts')
-
-            print('host\t\tmac\t\t\tswitch\t\tadjacency interface')
-            print('----\t\t---\t\t\t------\t\t-------------------')
-            print('')
-            for t in local_hosts:
-                print('%s\t%s\t%s\t%s' % (t.ip_addr, t.mac_addr, t.rsinfrastructure.ip_addr, t.adjacency_int))
-            print('')
-            print_underscore()
-
-
-def show_local_subnets():
-
-    local_subnets = db_session.query(LocalSubnets).all()
-
-    if local_subnets:
-
-        if local_subnets:
-
-            show_display('Local subnets')
-
-            print('subnet\t\t\t\tswitch\t\t\t\tsource interface')
-            print('------\t\t\t\t------\t\t\t\t-------------------')
-            print('')
-            for sn in local_subnets:
-                print('%s\t\t\t%s\t\t\t%s' % (sn.subnet, sn.rsinfrastructure.ip_addr, sn.source_int))
-            print('')
-            print_underscore()
 
 
 def show_seeds():
@@ -273,103 +216,6 @@ def show_openvas():
             show_display('OpenVas last update')
             print('OpenVas last updated at:         %s' % last_update.updated_at)
             print_underscore()
-
-
-def show_inventory(ip):
-
-    inventory = None
-
-    if ip is not None:
-        inventory = db_session.query(InventoryHost).filter(InventoryHost.ip_addr == ip)
-
-    elif ip is None:
-        inventory = db_session.query(InventoryHost).all()
-
-    if inventory:
-
-        show_display('Inventory')
-        for h in inventory:
-            services = db_session.query(InventorySvc).filter(InventorySvc.inventory_host_id == h.id).all()
-
-            if h.state == 'up':
-                try:
-                    print('')
-                    if h.ip_addr is not None:
-                        print('IP Address:                              %s' % h.ip_addr)
-
-                    if h.macaddr is not None:
-                        print('MAC Address:                             %s' % h.macaddr)
-
-                    if h.mac_vendor is not None:
-                        print('MAC Vendor Name:                         %s' % h.mac_vendor.name)
-
-                    if h.host_type is not None:
-                        print('Host Type:                               %s' % h.host_type)
-
-                    if h.host_name is not None:
-                        print('Host Name:                               %s' % h.host_name)
-
-                    if h.local_host:
-                        print('')
-
-                        if h.local_host.rsinfrastructure.host_name:
-                            print('Connected to:                            %s (%s)' % (h.local_host.rsinfrastructure.ip_addr,
-                                                                                    h.local_host.rsinfrastructure.host_name))
-                        else:
-                            print('Connected to:                            %s' % h.local_host.rsinfrastructure.ip_addr)
-
-                        print('Model:                                   %s' % h.local_host.rsinfrastructure.model_number)
-                        print('Interface:                               %s' % h.local_host.adjacency_int)
-
-                    if h.product is not None:
-                        print('Product Name:                            %s' % h.product.name)
-                        print('Product Version:                         %s' % h.product.version)
-
-                    if h.info is not None:
-                        print('Info:                                    %s' % h.info)
-
-                    if h.comments is not None:
-                        print('Comments:                                %s' % h.comments)
-
-                    for s in services:
-                        print('')
-                        if s.protocol is not None:
-                            print('Protocol:                                %s' % s.protocol)
-
-                        if s.portid is not None:
-                            print('Port:                                    %s' % s.portid)
-
-                        if s.name is not None:
-                            print('Name:                                    %s' % s.name)
-
-                        if s.svc_product is not None:
-                            print('Service Product:                         %s' % s.svc_product)
-
-                        if s.extra_info is not None:
-                            print('Extra Info:                              %s' % s.extra_info)
-
-                        if s.product is not None:
-                            print('Product Name:                            %s' % s.product.name)
-
-                    print_underscore()
-
-                except Exception as sh_e:
-                    print(sh_e)
-
-
-def index_inventory():
-
-    inventory = db_session.query(InventoryHost).all()
-
-    for h in inventory:
-
-        d = {'ip_addr': h.ip_addr,
-             'mac_addr': h.macaddr,
-             'mac_vendor': str(h.mac_vendor.name),
-             'hostname': str(h.host_name),
-             'adjacency_switch': h.local_host.rsinfrastructure.ip_addr,
-             'adjacency_int': str(h.local_host.adjacency_int)}
-        splunk_sock(d)
 
 
 def show_infrastructure():
@@ -436,70 +282,6 @@ def show_discovery_protocol():
 # -------------------------------------------------------------------------------
 
 
-def clear_local_hosts():
-
-    try:
-        db_session.query(LocalHost).delete()
-        db_session.commit()
-
-    except Exception as h_e:
-        db_session.rollback()
-        print(h_e)
-
-    return
-
-
-def no_local_host(local_host):
-
-    for t in local_host:
-        h_id = None
-
-        try:
-            h_id = db_session.query(LocalHost).filter_by(ip_addr=t).first()
-
-        except Exception as t_e:
-            print(t_e)
-
-        try:
-            if h_id is not None:
-                try:
-                    db_session.query(LocalHost).filter_by(id=h_id.id).delete()
-                    db_session.commit()
-                except Exception as h_id_e:
-                    db_session.rollback()
-                    print(h_id_e)
-
-        except Exception as error:
-            print(error)
-
-
-def add_local_host(hosts):
-
-    ip_list = list()
-    subnet_list = list()
-
-    for t in hosts:
-
-        # is a valid ip address?
-        if check_if_valid_address(t):
-            ip_list.append(t)
-
-        # is a valid ip cider?
-        elif check_if_valid_cider(t):
-            subnet_list.append(t)
-
-    for h in ip_list:
-        add_host = LocalHost(ip_addr=h)
-
-        try:
-            db_session.add(add_host)
-            db_session.commit()
-
-        except IntegrityError:
-            db_session.rollback()
-            print('%s already exists' % str(h))
-
-
 def add_seeds(seed_info):
 
     if len(seed_info) < 2:
@@ -521,7 +303,7 @@ def add_seeds(seed_info):
             hostname = None
 
         add_svc_user = SvcUser(username=username,
-                                 description='Seed Router Service Account')
+                               description='Seed Router Service Account')
 
         try:
             db_session.add(add_svc_user)
@@ -600,20 +382,13 @@ def cli_loop(prefix, mode, v):
             if mode == '>':
                 readline.set_completer(TabCompletion(['config',
                                                       'show',
-                                                      'run discovery',
                                                       'infrastructure',
                                                       'firewalls',
-                                                      'local_hosts',
-                                                      'local_subnets',
-                                                      'inventory',
                                                       'seeds',
                                                       'openvas',
                                                       'nmap',
                                                       'discovery',
-                                                      'all',
-                                                      'export',
-                                                      'xlsx',
-                                                      'index'
+                                                      'all'
                                                       ]).complete)
             elif mode == '(config)#':
                 readline.set_completer(TabCompletion(['local_hosts',
@@ -727,32 +502,11 @@ def cli_loop(prefix, mode, v):
                         if cmd[1] == '?':
                             display_show_help()
 
-                        elif cmd[1] == 'local_hosts':
-                            show_local_hosts()
-
-                        elif cmd[1] == 'local_subnets':
-                            show_local_subnets()
-
                         elif cmd[1] == 'seeds':
                             show_seeds()
 
                         elif cmd[1] == 'openvas':
                             show_openvas()
-
-                        elif cmd[1] == 'inventory':
-
-                            try:
-                                if cmd[2]:
-                                    ch_1 = check_if_valid_address(cmd[2])
-
-                                    if ch_1:
-                                        show_inventory(cmd[2])
-                                continue
-
-                            except IndexError:
-                                pass
-
-                            show_inventory(None)
 
                         elif cmd[1] == 'infrastructure':
                             show_infrastructure()
@@ -761,31 +515,8 @@ def cli_loop(prefix, mode, v):
                             show_seeds()
                             show_infrastructure()
                             show_discovery_protocol()
-                            show_local_hosts()
-                            show_local_subnets()
-                            show_inventory(None)
                             show_openvas()
                             # show_nmap()
-
-                    # ------------------------------------------------------------------
-                    # export commands [reporting]
-                    # ------------------------------------------------------------------
-                    if cmd[0] == 'export':
-
-                        if cmd[1] == 'all':
-
-                            if cmd[2] == 'xlsx':
-                                ExportToXLSX(home_dir)
-                                continue
-
-                    # ------------------------------------------------------------------
-                    # index commands [reporting]
-                    # ------------------------------------------------------------------
-                    if cmd[0] == 'index':
-
-                        if cmd[1] == 'all':
-                            index_inventory()
-                            continue
 
                 # ----------------------------------------------------------------------
                 # config (config) mode commands
@@ -803,37 +534,12 @@ def cli_loop(prefix, mode, v):
                     # ------------------------------------------------------------------
                     # enter into sub config modes
                     # ------------------------------------------------------------------
-                    if cmd[0] == 'local_hosts' \
-                            or cmd[0] == 'nmap' \
+                    if cmd[0] == 'nmap' \
                             or cmd[0] == 'openvas' \
                             or cmd[0] == 'seeds':
                         mode = '(config/%s)#' % cmd[0]
                         continue
                         # --------------------------------------------------------------
-
-                if mode == '(config/local_hosts)#':
-
-                    if cmd[0] == 'exit':
-                        mode = '(config)#'
-                        continue
-
-                    if cmd[0] == '?':
-                        display_help(mode)
-                        continue
-
-                    # ------------------------------------------------------------------
-                    # add and remove local_hosts
-                    # ------------------------------------------------------------------
-                    if cmd[0] == 'add':
-                        add_local_host(cmd[1:])
-
-                    if cmd[0] == 'no':
-                        no_local_host(cmd[1:])
-
-                    if ' '.join(cmd) == 'clear local_hosts':
-                        clear_local_hosts()
-
-                    # ------------------------------------------------------------------
 
                 if mode == '(config/nmap)#':
 

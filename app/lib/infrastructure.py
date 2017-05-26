@@ -31,12 +31,7 @@ from app import IOS_SHOW_ARP,\
 from app.lib.active_discovery import RunNmap
 from app.database.models import RSInfrastructure,\
     RSAddr,\
-    LocalHost,\
     DiscoveryProtocolFinding,\
-    MacAddrTable,\
-    LocalSubnets, \
-    MACVendor, \
-    InventoryHost, \
     SeedRouter, \
     DoNotSeed, \
     HostUsingSshv1, \
@@ -348,13 +343,13 @@ class InterrogateRSI(object):
         self.svc_user_id = svc_user_id
         self.seed = seed
 
-        # t = threading.Thread(target=self.run, args=(host_name, ip_addr, username, svc_user_id, seed))
-        # t.start()
-        self.run(host_name,
-                 ip_addr,
-                 username,
-                 svc_user_id,
-                 seed)
+        t = threading.Thread(target=self.run, args=(host_name, ip_addr, username, svc_user_id, seed))
+        t.start()
+        #self.run(host_name,
+        #         ip_addr,
+        #         username,
+        #         svc_user_id,
+        #         seed)
 
     @staticmethod
     def interrogate(username, host):
@@ -849,7 +844,7 @@ class InterrogateRSI(object):
             rsi_db_session.commit()
 
             if config['splunk_indexer']:
-                splunk_sock(rsi_d)
+                splunk_sock('RSInfrastructure=%s' % rsi_d)
 
         except IntegrityError:
             rsi_db_session.rollback()
@@ -865,7 +860,7 @@ class InterrogateRSI(object):
             rsi = rsi_db_session.query(RSInfrastructure).filter(RSInfrastructure.ip_addr == ip_addr).first()
 
             if config['splunk_indexer']:
-                splunk_sock(rsi_d)
+                splunk_sock('RSInfrastructure=%s' % rsi_d)
 
         if seed is False:
             # delete rsaddrs per rsi_id
@@ -884,7 +879,7 @@ class InterrogateRSI(object):
             rsi_db_session.commit()
 
             if config['splunk_indexer']:
-                splunk_sock(rsaddr_d)
+                splunk_sock('RSAddr=%s' % rsaddr_d)
 
         if seed is False:
             # delete discovery_dict_list per rsi_id
@@ -928,7 +923,7 @@ class InterrogateRSI(object):
                 syslog.syslog(syslog.LOG_INFO, str(e))
 
             if config['splunk_indexer']:
-                splunk_sock(cdp_data_d)
+                splunk_sock('DiscoveryProtocolFinding=%s' % cdp_data_d)
 
         # -------------------------------------------------------------------------------
         # The remaining data is indexed only
@@ -943,7 +938,7 @@ class InterrogateRSI(object):
                                 'vlan': m['vlan']}
 
             if config['splunk_indexer']:
-                splunk_sock(mac_addr_table_d)
+                splunk_sock('MacAddrTable=%s' % mac_addr_table_d)
 
         for h in local_host_dict_list:
 
@@ -953,7 +948,7 @@ class InterrogateRSI(object):
                             'adjacency_int': str(h['adjacency_int'])}
 
             if config['splunk_indexer']:
-                splunk_sock(local_host_d)
+                splunk_sock('LocalHost=%s' % local_host_d)
 
             mac_lookup_string = h['mac_addr'].replace('.', '')
 
@@ -986,7 +981,7 @@ class InterrogateRSI(object):
                                   'adjacency_int': h['adjacency_int']}
 
                 if config['splunk_indexer']:
-                    splunk_sock(inventory_host)
+                    splunk_sock('InventoryHost=%s' % inventory_host)
 
         for l in local_subnets_dict_list:
 
@@ -995,7 +990,7 @@ class InterrogateRSI(object):
                             'source_int': str(l['source_int'])}
 
             if config['splunk_indexer']:
-                splunk_sock(local_subnet)
+                splunk_sock('LocalSubnet=%s' % local_subnet)
 
         rsi_db_session.close()
         return

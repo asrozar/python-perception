@@ -1,9 +1,6 @@
 # Ideally this parser should return lists of dicts and not use the database
 
 import xml.etree.ElementTree as ET
-from sqlalchemy.exc import IntegrityError
-from app.database.models import InventoryHost,\
-    Vulnerability
 from app import Session
 import syslog
 from socket import gethostbyaddr, herror
@@ -141,30 +138,31 @@ def parse_openvas_xml(openvas_xml):
                     pass
 
             if float(cvss) > 0.0:
-                inventory_host = openvas_db_session.query(InventoryHost).filter_by(ipv4_addr=host).first()
+                print ''
+                #inventory_host = openvas_db_session.query(InventoryHost).filter_by(ipv4_addr=host).first()
 
                 #  Add the vulnerability to the database
-                add_vuln = Vulnerability(name=name,
-                                         cvss_score=cvss,
-                                         cve_id=cve,
-                                         family=family,
-                                         bug_id=bid,
-                                         inventory_host_id=inventory_host.id,
-                                         port=port,
-                                         threat_score=threat,
-                                         severity_score=severity,
-                                         xrefs=xrefs,
-                                         tags=tags)
+                #add_vuln = Vulnerability(name=name,
+                #                         cvss_score=cvss,
+                #                         cve_id=cve,
+                #                         family=family,
+                #                         bug_id=bid,
+                #                         inventory_host_id=inventory_host.id,
+                #                         port=port,
+                #                         threat_score=threat,
+                #                         severity_score=severity,
+                #                         xrefs=xrefs,
+                #                         tags=tags)
 
                 #  If the OS product does not exist, add it
-                try:
-                    openvas_db_session.add(add_vuln)
-                    openvas_db_session.commit()
+                #try:
+                #    openvas_db_session.add(add_vuln)
+                #    openvas_db_session.commit()
 
-                except IntegrityError:
-                    openvas_db_session.rollback()
+                #except IntegrityError:
+                #    openvas_db_session.rollback()
     
-    openvas_db_session.close()
+    #openvas_db_session.close()
     return 0
 
 
@@ -177,8 +175,6 @@ def parse_nmap_xml(nmap_results):
 
     except ET.ParseError:
         return 99
-
-    host_dict_list = list()
 
     try:
         #  Find all the hosts in the nmap scan
@@ -424,10 +420,12 @@ def parse_nmap_xml(nmap_results):
                                   'adjacency_switch': adjacency_switch,
                                   'adjacency_int': adjacency_int}
 
-                host_dict_list.append((inventory_host, port_dict_list))
+                host_dict = {'inventory_host': inventory_host,
+                             'ports': port_dict_list}
+
+                return host_dict
 
     except Exception as nmap_xml_e:
         syslog.syslog(syslog.LOG_INFO, '####  Failed to parse the Nmap XML output file %s  ####' % str(nmap_results))
         syslog.syslog(syslog.LOG_INFO, str(nmap_xml_e))
 
-    return host_dict_list
