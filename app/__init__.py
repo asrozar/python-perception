@@ -13,7 +13,7 @@ config_file = getenv('PERCEPTION_CONFIG')
 home_dir = getenv('HOME')
 
 if config_file is None:
-    config_file = '/etc/perception/config.yml'
+    config_file = '/etc/perception/configuration.yml'
 
 config = ConfigParser(config_file).parse()
 db_config = {'drivername': config['drivername'],
