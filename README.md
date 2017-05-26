@@ -56,5 +56,3 @@ tool.
     `show infrastructure` Displays the discovered network devices.
     
     `show seeds` Displays the current devices.
-    
-================================================================================================
