@@ -85,12 +85,11 @@ class RunNmap(object):
                     syslog.syslog(syslog.LOG_INFO, 'Could not parse XML for host %s' % host)
 
                 else:
-                    parsed_results = parse_nmap_xml(nmap_scan_xml_path)[0]
+                    parsed_results = parse_nmap_xml(nmap_scan_xml_path)
                     remove(nmap_scan_xml_path[0])
 
                     if config['splunk_indexer']:
-                        splunk_sock(parsed_results)
-
+                        splunk_sock('InventoryHost=%s' % str(parsed_results))
                     return
 
         except TypeError as type_e:
