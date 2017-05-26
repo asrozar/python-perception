@@ -26,7 +26,7 @@ Example Configuration
     # svc_account_passwd: insecure_password
 
     # Splunk Indexer Info
-    splunk_inder: False
+    splunk_indexer: False
     splunk_host: host
     splunk_username: username
     splunk_password: super_secure_password
