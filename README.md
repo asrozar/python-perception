@@ -35,8 +35,16 @@ Example Configuration
 
 PostgreSQL 8.4 and ^ is supported.
 
-This tool is still under development and has not been fully released. There are two parts to this
-tool.
+Next install requirements:
+
+`pip install -r requirements`
+
+Then run the migration:
+
+`alembic upgrade head`
+
+
+There are two parts to this application.
 
 1) Perception CLI
 
