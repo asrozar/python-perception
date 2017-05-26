@@ -16,9 +16,9 @@ discovery_mode: passive
 # svc_account_passwd: insecure_password
 
 # Splunk Indexer Info
-splunk_indexer: False
+splunk_indexer: True
 splunk_host: host
 splunk_username: username
 splunk_password: super_secure_password
 splunk_api_port: 8089
-splunk_api_index: perception_index
+splunk_index: perception_index
