@@ -81,7 +81,6 @@ def hostname_lookup(ip_addr):
 
 
 def splunk_sock(event):
-
     s = client.connect(host=config['splunk_host'],
                        port=config['splunk_api_port'],
                        username=config['splunk_username'],
