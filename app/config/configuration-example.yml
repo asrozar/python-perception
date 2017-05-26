@@ -17,7 +17,7 @@ discovery_mode: passive
 
 # Splunk Indexer Info
 splunk_indexer: True
-splunk_host: host
+splunk_host: ip_addr
 splunk_username: username
 splunk_password: super_secure_password
 splunk_api_port: 8089
