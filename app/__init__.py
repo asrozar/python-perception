@@ -5,8 +5,9 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import sessionmaker
 from socket import gethostbyaddr, herror
 import splunklib.client as client
+import syslog
 
-__version__ = '0.3'
+__version__ = '0.4'
 __author__ = 'Avery Rozar: avery.rozar@insecure-it.com'
 
 config_file = getenv('PERCEPTION_CONFIG')
@@ -80,13 +81,18 @@ def hostname_lookup(ip_addr):
     return hostname
 
 
+# TODO: Use rabbit MQ, I'm loosing events
 def splunk_sock(event):
-    s = client.connect(host=config['splunk_host'],
-                       port=config['splunk_api_port'],
-                       username=config['splunk_username'],
-                       password=config['splunk_password'])
+    try:
+        s = client.connect(host=config['splunk_host'],
+                           port=config['splunk_api_port'],
+                           username=config['splunk_username'],
+                           password=config['splunk_password'])
 
-    index = s.indexes[config['splunk_index']]
+        index = s.indexes[config['splunk_index']]
 
-    with index.attached_socket(sourcetype='perception_app') as sock:
-        sock.send(str(event))
+        with index.attached_socket(sourcetype='perception_app') as sock:
+            sock.send(str(event))
+    except Exception as e:
+        syslog.syslog(syslog.LOG_INFO, 'splunk_sock error: %s' % str(e))
+        syslog.syslog(syslog.LOG_INFO, 'splunk_sock event: %s' % str(event))
