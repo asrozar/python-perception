@@ -48,7 +48,7 @@ tool.
     `DiscoveryProtocolSpider()` checks the DiscoveryProtocolFinding table for new network devices to
     interrogate and adds them to the SeedRouter table.
     
-    `RSInventorySpider()` is the process to re-interrogate the network devices and keep the inventory up
+    `RSInventoryUpdater()` is the process to re-interrogate the network devices and keep the inventory up
     to date.
     
     Show commands:
