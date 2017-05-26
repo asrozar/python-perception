@@ -2,7 +2,7 @@ Perception
 ==========
 
 Perception is a tool used to gain better network visibility by pulling LAN information from IOS
-network devices.
+network devices. Inventory information is indexed using Splunk.
 
 
 First thing to do is edit the app/config/database.yml file.
@@ -42,8 +42,8 @@ tool.
     `hostname(config/seeds)# add 10.1.1.1 info_svc_account`.
     
     The interrogation of the network devices yields information about locally connected hosts, subnets
-    arp-cache tables and discovery protocol information. During interrogation the local hosts are port scanned
-    using `nmap -sS -sV host_ip`.
+    arp-cache tables and discovery protocol information. If discovery mode is configured as "active" [default=passive], during 
+    interrogation the local hosts will be port scanned using `nmap -sS -sV host_ip`.
     
     `DiscoveryProtocolSpider()` checks the DiscoveryProtocolFinding table for new network devices to
     interrogate and adds them to the SeedRouter table.
