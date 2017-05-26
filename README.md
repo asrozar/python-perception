@@ -35,11 +35,11 @@ tool.
     
     The following example show how to add a seed router in the Perception CLI:
     
-    `hostname: config`
+    `hostname> config`
     
-    `hostname(config): seeds`
+    `hostname(config)# seeds`
     
-    `hostname(config/seeds): add 10.1.1.1 info_svc_account`.
+    `hostname(config/seeds)# add 10.1.1.1 info_svc_account`.
     
     The interrogation of the network devices yields information about locally connected hosts, subnets
     arp-cache tables and discovery protocol information. During interrogation the local hosts are port scanned
