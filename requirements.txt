@@ -1,0 +1,10 @@
+alembic
+sqlalchemy
+scapy
+pyOpenSSL
+psycopg2
+cryptography
+pexpect
+pika
+xlsxwriter
+splunk-sdk
