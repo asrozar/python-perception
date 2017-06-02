@@ -81,7 +81,7 @@ def hostname_lookup(ip_addr):
     return hostname
 
 
-# TODO: Use rabbit MQ, I'm loosing events
+# TODO: Use rabbit MQ, I'm losing events
 def splunk_sock(event):
     try:
         s = client.connect(host=config['splunk_host'],
