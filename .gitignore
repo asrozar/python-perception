@@ -1,5 +1,5 @@
 # config files
-app/config/configuration.yml
+app/config/database.yml
 app/config/configuration.py
 
 # .idea
