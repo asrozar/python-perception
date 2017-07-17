@@ -31,6 +31,7 @@ splunk_host = 'splunk.host.local'
 splunk_username = 'splunk_user'
 splunk_password = 'should_setup_pki'
 splunk_api_port = 8089
+splink_index = 'index_name'
 
 # -------------------------
 # Nessus hosts and API keys
