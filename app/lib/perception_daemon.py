@@ -384,5 +384,4 @@ class PerceptionDaemon(object):
         SeedStarter()
         DiscoveryProtocolSpider()
         RSInventoryUpdater()
-        # For future use
-        # OpenVasUpdater()
+        OpenVasUpdater()
