@@ -764,7 +764,7 @@ class InterrogateRSI(object):
                 rsi_db_session.commit()
 
                 if config.splunk_indexer:
-                    splunk_sock('VULNERABILITY: %s is currently using SSHv1' % ip_addr)
+                    splunk_sock('VULNERABILITY: %s is currently using SSHv1' % ip_addr, config.splunk_index)
 
                 return
             except Exception as e:
@@ -782,7 +782,7 @@ class InterrogateRSI(object):
                 rsi_db_session.commit()
 
                 if config.splunk_indexer:
-                    splunk_sock('DANGER: SSH key for %s has changed' % ip_addr)
+                    splunk_sock('DANGER: SSH key for %s has changed' % ip_addr, config.splunk_index)
                 return
             except Exception as e:
                 syslog.syslog(syslog.LOG_INFO, str(e))
@@ -799,7 +799,7 @@ class InterrogateRSI(object):
                 rsi_db_session.commit()
 
                 if config.splunk_indexer:
-                    splunk_sock('INFO: Perception can not access %s' % ip_addr)
+                    splunk_sock('INFO: Perception can not access %s' % ip_addr, config.splunk_index)
                 return
             except Exception as e:
                 syslog.syslog(syslog.LOG_INFO, str(e))
@@ -844,7 +844,7 @@ class InterrogateRSI(object):
             rsi_db_session.commit()
 
             if config.splunk_indexer:
-                splunk_sock('RSInfrastructure=%s' % rsi_d)
+                splunk_sock('RSInfrastructure=%s' % rsi_d, config.splunk_index)
 
         except IntegrityError:
             rsi_db_session.rollback()
@@ -860,7 +860,7 @@ class InterrogateRSI(object):
             rsi = rsi_db_session.query(RSInfrastructure).filter(RSInfrastructure.ip_addr == ip_addr).first()
 
             if config.splunk_indexer:
-                splunk_sock('RSInfrastructure=%s' % rsi_d)
+                splunk_sock('RSInfrastructure=%s' % rsi_d, config.splunk_index)
 
         if seed is False:
             # delete rsaddrs per rsi_id
@@ -879,7 +879,7 @@ class InterrogateRSI(object):
             rsi_db_session.commit()
 
             if config.splunk_indexer:
-                splunk_sock('RSAddr=%s' % rsaddr_d)
+                splunk_sock('RSAddr=%s' % rsaddr_d, config.splunk_index)
 
         if seed is False:
             # delete discovery_dict_list per rsi_id
@@ -923,7 +923,7 @@ class InterrogateRSI(object):
                 syslog.syslog(syslog.LOG_INFO, str(e))
 
             if config.splunk_indexer:
-                splunk_sock('DiscoveryProtocolFinding=%s' % cdp_data_d)
+                splunk_sock('DiscoveryProtocolFinding=%s' % cdp_data_d, config.splunk_index)
 
         # -------------------------------------------------------------------------------
         # The remaining data is indexed only
@@ -938,7 +938,7 @@ class InterrogateRSI(object):
                                 'vlan': m['vlan']}
 
             if config.splunk_indexer:
-                splunk_sock('MacAddrTable=%s' % mac_addr_table_d)
+                splunk_sock('MacAddrTable=%s' % mac_addr_table_d, config.splunk_index)
 
         for h in local_host_dict_list:
 
@@ -948,7 +948,7 @@ class InterrogateRSI(object):
                             'adjacency_int': str(h['adjacency_int'])}
 
             if config.splunk_indexer:
-                splunk_sock('LocalHost=%s' % local_host_d)
+                splunk_sock('LocalHost=%s' % local_host_d, config.splunk_index)
 
             mac_lookup_string = h['mac_addr'].replace('.', '')
 
@@ -981,7 +981,7 @@ class InterrogateRSI(object):
                                   'adjacency_int': h['adjacency_int']}
 
                 if config.splunk_indexer:
-                    splunk_sock('InventoryHost=%s' % inventory_host)
+                    splunk_sock('InventoryHost=%s' % inventory_host, config.splunk_index)
 
         for l in local_subnets_dict_list:
 
@@ -990,7 +990,7 @@ class InterrogateRSI(object):
                             'source_int': str(l['source_int'])}
 
             if config.splunk_indexer:
-                splunk_sock('LocalSubnet=%s' % local_subnet)
+                splunk_sock('LocalSubnet=%s' % local_subnet, config.splunk_index)
 
         rsi_db_session.close()
         return
