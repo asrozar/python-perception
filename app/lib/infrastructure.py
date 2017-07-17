@@ -101,7 +101,7 @@ def get_ssh_session(host, username):
             elif s == 4:
                 return 97, ''
             elif s == 5:
-                child.sendline(config['svc_account_passwd'])
+                child.sendline(config.svc_account_passwd)
                 s = child.expect([TIMEOUT,
                                   unicode(SSH_REFUSED),
                                   unicode(PASSWORD),
@@ -127,7 +127,7 @@ def get_ssh_session(host, username):
                 return s, HASH_PROMPT
 
         elif s == 3:
-            child.sendline(config['svc_account_passwd'])
+            child.sendline(config.svc_account_passwd)
             s = child.expect([TIMEOUT,
                               unicode(SSH_REFUSED),
                               unicode(PASSWORD),
@@ -209,7 +209,7 @@ def get_ssh_session(host, username):
                 elif s == 4:
                     return 97, ''
                 elif s == 5:
-                    child.sendline(config['svc_account_passwd'])
+                    child.sendline(config.svc_account_passwd)
                     s = child.expect([TIMEOUT,
                                       unicode(SSH_REFUSED),
                                       unicode(PASSWORD),
@@ -235,7 +235,7 @@ def get_ssh_session(host, username):
                     return s, HASH_PROMPT
 
             elif s == 3:
-                child.sendline(config['svc_account_passwd'])
+                child.sendline(config.svc_account_passwd)
                 s = child.expect([TIMEOUT,
                                   unicode(SSH_REFUSED),
                                   unicode(PASSWORD),
@@ -268,7 +268,7 @@ def get_ssh_session(host, username):
         elif s == 5:
             return 97, ''
         elif s == 6:
-            child.sendline(config['svc_account_passwd'])
+            child.sendline(config.svc_account_passwd)
             s = child.expect([TIMEOUT,
                               unicode(SSH_REFUSED),
                               unicode(PASSWORD),
@@ -299,7 +299,7 @@ def get_ssh_session(host, username):
 
     elif s == 6:
         # using password not PKI
-        child.sendline(config['svc_account_passwd'])
+        child.sendline(config.svc_account_passwd)
         s = child.expect([TIMEOUT,
                           unicode(SSH_REFUSED),
                           unicode(PASSWORD),
@@ -763,7 +763,7 @@ class InterrogateRSI(object):
 
                 rsi_db_session.commit()
 
-                if config['splunk_indexer']:
+                if config.splunk_indexer:
                     splunk_sock('VULNERABILITY: %s is currently using SSHv1' % ip_addr)
 
                 return
@@ -781,7 +781,7 @@ class InterrogateRSI(object):
                 rsi_db_session.add(do_not_seed)
                 rsi_db_session.commit()
 
-                if config['splunk_indexer']:
+                if config.splunk_indexer:
                     splunk_sock('DANGER: SSH key for %s has changed' % ip_addr)
                 return
             except Exception as e:
@@ -798,7 +798,7 @@ class InterrogateRSI(object):
                 rsi_db_session.add(do_not_seed)
                 rsi_db_session.commit()
 
-                if config['splunk_indexer']:
+                if config.splunk_indexer:
                     splunk_sock('INFO: Perception can not access %s' % ip_addr)
                 return
             except Exception as e:
@@ -843,7 +843,7 @@ class InterrogateRSI(object):
             rsi_db_session.add(rsi)
             rsi_db_session.commit()
 
-            if config['splunk_indexer']:
+            if config.splunk_indexer:
                 splunk_sock('RSInfrastructure=%s' % rsi_d)
 
         except IntegrityError:
@@ -859,7 +859,7 @@ class InterrogateRSI(object):
             rsi_db_session.commit()
             rsi = rsi_db_session.query(RSInfrastructure).filter(RSInfrastructure.ip_addr == ip_addr).first()
 
-            if config['splunk_indexer']:
+            if config.splunk_indexer:
                 splunk_sock('RSInfrastructure=%s' % rsi_d)
 
         if seed is False:
@@ -878,7 +878,7 @@ class InterrogateRSI(object):
             rsi_db_session.add(add_rsaddr)
             rsi_db_session.commit()
 
-            if config['splunk_indexer']:
+            if config.splunk_indexer:
                 splunk_sock('RSAddr=%s' % rsaddr_d)
 
         if seed is False:
@@ -922,7 +922,7 @@ class InterrogateRSI(object):
             except Exception as e:
                 syslog.syslog(syslog.LOG_INFO, str(e))
 
-            if config['splunk_indexer']:
+            if config.splunk_indexer:
                 splunk_sock('DiscoveryProtocolFinding=%s' % cdp_data_d)
 
         # -------------------------------------------------------------------------------
@@ -937,7 +937,7 @@ class InterrogateRSI(object):
                                 'port': str(m['port']),
                                 'vlan': m['vlan']}
 
-            if config['splunk_indexer']:
+            if config.splunk_indexer:
                 splunk_sock('MacAddrTable=%s' % mac_addr_table_d)
 
         for h in local_host_dict_list:
@@ -947,7 +947,7 @@ class InterrogateRSI(object):
                             'mac_addr': str(h['mac_addr']),
                             'adjacency_int': str(h['adjacency_int'])}
 
-            if config['splunk_indexer']:
+            if config.splunk_indexer:
                 splunk_sock('LocalHost=%s' % local_host_d)
 
             mac_lookup_string = h['mac_addr'].replace('.', '')
@@ -961,7 +961,7 @@ class InterrogateRSI(object):
 
             mac_vendor = ' '.join(mac_vendor_lookup.strip().split(' ')[1:])
 
-            if config['discovery_mode'] == 'active':
+            if config.discovery_mode == 'active':
                 RunNmap(nmap_tmp_dir,
                         h['ip_addr'],
                         h['mac_addr'],
@@ -969,7 +969,7 @@ class InterrogateRSI(object):
                         '%s (%s)' % (rsi.ip_addr, rsi.host_name),
                         h['adjacency_int'])
 
-            elif config['discovery_mode'] == 'passive':
+            elif config.discovery_mode == 'passive':
 
                 local_host_host_name = hostname_lookup(h['ip_addr'])
 
@@ -980,7 +980,7 @@ class InterrogateRSI(object):
                                   'adjacency_switch': str('%s (%s)' % (rsi.ip_addr, rsi.host_name)),
                                   'adjacency_int': h['adjacency_int']}
 
-                if config['splunk_indexer']:
+                if config.splunk_indexer:
                     splunk_sock('InventoryHost=%s' % inventory_host)
 
         for l in local_subnets_dict_list:
@@ -989,7 +989,7 @@ class InterrogateRSI(object):
                             'subnet': str(l['subnet']),
                             'source_int': str(l['source_int'])}
 
-            if config['splunk_indexer']:
+            if config.splunk_indexer:
                 splunk_sock('LocalSubnet=%s' % local_subnet)
 
         rsi_db_session.close()
