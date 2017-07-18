@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, Integer, Text, ForeignKey, Sequence, TIMESTAMP, String
+from sqlalchemy import Column, Integer, Text, ForeignKey, TIMESTAMP, String
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
