@@ -1,5 +1,5 @@
 import datetime
-from sqlalchemy import Column, Integer, Text, ForeignKey, Sequence, TIMESTAMP, String, PrimaryKeyConstraint
+from sqlalchemy import Column, Integer, Text, ForeignKey, Sequence, TIMESTAMP, String
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -14,7 +14,7 @@ def _get_date():
 class OpenvasAdmin(Base):
     __tablename__ = 'openvas_admin'
 
-    id = Column(Integer, Sequence('openvas_admin_id_seq'), primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True, nullable=False)
     username = Column(Text, unique=True, nullable=False)
     password = Column(postgresql.UUID, nullable=False)
     created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
@@ -49,7 +49,7 @@ class SvcUser(Base):
 class RSInfrastructure(Base):
     __tablename__ = 'rsinfrastructure'
 
-    id = Column(Integer, Sequence('rsinfrastructure_id_seq'), primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
     host_name = Column(Text, unique=True)
 
@@ -129,7 +129,7 @@ class DiscoveryProtocolFinding(Base):
 class SeedRouter(Base):
     __tablename__ = 'seed_routers'
 
-    id = Column(Integer, Sequence('seed_routers_id_seq'), primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
     host_name = Column(Text, unique=True)
 
@@ -153,26 +153,26 @@ class SeedRouter(Base):
 class OpenvasLastUpdate(Base):
     __tablename__ = 'openvas_last_updates'
 
-    id = Column(Integer, Sequence('openvas_last_updates_id_seq'), primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True, nullable=False)
     updated_at = Column(TIMESTAMP(timezone=False), nullable=False)
 
 
 class DoNotSeed(Base):
     __tablename__ = 'do_not_seeds'
 
-    id = Column(Integer, Sequence('do_not_seeds_id_seq'), primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
 
 
 class HostUsingSshv1(Base):
     __tablename__ = 'hosts_using_sshv1'
 
-    id = Column(Integer, Sequence('hosts_using_sshv1_id_seq'), primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
 
 
 class HostWithBadSshKey(Base):
     __tablename__ = 'hosts_with_bad_ssh_key'
 
-    id = Column(Integer, Sequence('hosts_with_bad_ssh_key_id_seq'), primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
