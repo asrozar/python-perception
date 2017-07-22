@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from app import db_session, hostname_lookup
+from app import db_session, hostname_lookup, config, nmap_tmp_dir, system_uuid, es_put_document
 from signal import SIGTERM
 from os import remove, path, kill, getpid, chdir, dup2, fork, setsid, umask
 from sqlalchemy.exc import OperationalError
@@ -20,14 +20,97 @@ from app.lib.infrastructure import InterrogateRSI
 from app.lib.openvas import setup_openvas,\
     update_openvas_db,\
     migrate_rebuild_db
+from active_discovery import RunNmap, RunOpenVas
 from sqlalchemy.exc import IntegrityError, ProgrammingError
+from re import match
 import threading
 import syslog
 import sys
 import atexit
+import pika
+import ast
+import json
 
 
-# For future use
+class MessageBroker(object):
+    def __init__(self, interval=5):
+        self.interval = interval
+
+        t = threading.Thread(target=self.run, args=())
+        t.start()
+
+    @staticmethod
+    def callback(ch, method, properties, body):
+
+        try:
+            openvas_admin = db_session.query(OpenvasAdmin).order_by(OpenvasAdmin.id.desc()).first()
+        except OperationalError as oe:
+            syslog.syslog(syslog.LOG_INFO, 'Database OperationalError: %s' % oe)
+            openvas_admin = False
+
+        sleep(body.count(b'.'))
+
+        run_nmap = match(r'^run_nmap_on ', body)
+        run_openvas = match(r'^run_openvas_on ', body)
+        send_to_elasticsearch = match(r'^send_to_elasticsearch ', body)
+
+        if run_nmap:
+            host_list = body.strip('run_nmap_on ')
+            host_list = ast.literal_eval(host_list)
+
+            for host in host_list:
+
+                RunNmap(nmap_tmp_dir, host, None, None, None, None)
+
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+
+        elif run_openvas:
+            host_list = body.strip('run_openvas_on ')
+            host_list = ast.literal_eval(host_list)
+
+            if openvas_admin:
+
+                RunOpenVas(host_list, openvas_admin.username, openvas_admin.password)
+
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+
+        # TODO: this is breaking json for some reason
+        elif send_to_elasticsearch:
+             send_to_elasticsearch = body.split('|')
+             es_json_data = json.dumps(send_to_elasticsearch[3])
+             es_put_document(config.es_host,
+                             config.es_port,
+                             config.es_index,
+                             send_to_elasticsearch[1],
+                             send_to_elasticsearch[2],
+                             es_json_data)
+
+    def run(self):
+
+        while True:
+            try:
+
+                credentials = pika.PlainCredentials(config.mq_user, config.mq_password)
+                connection = pika.BlockingConnection(pika.ConnectionParameters(host=config.mq_host,
+                                                                               port=config.mq_port,
+                                                                               ssl=config.mq_ssl,
+                                                                               credentials=credentials))
+                channel = connection.channel()
+                channel.exchange_declare(exchange=system_uuid, type='direct')
+                result = channel.queue_declare(exclusive=True, durable=True)
+                queue_name = result.method.queue
+                channel.queue_bind(exchange=system_uuid, queue=queue_name, routing_key=system_uuid)
+
+                channel.basic_consume(self.callback, queue=queue_name)
+
+                channel.start_consuming()
+
+            except Exception as e:
+                syslog.syslog(syslog.LOG_INFO, 'MessageBroker error: %s' % str(e))
+
+            sleep(self.interval)
+
+
 class OpenVasUpdater(object):
     def __init__(self, interval=5*60):
         self.interval = interval
@@ -385,3 +468,4 @@ class PerceptionDaemon(object):
         DiscoveryProtocolSpider()
         RSInventoryUpdater()
         OpenVasUpdater()
+        MessageBroker()
