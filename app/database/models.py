@@ -176,3 +176,19 @@ class HostWithBadSshKey(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
+
+
+class NmapHost(Base):
+    __tablename__ = 'nmap_hosts'
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    ip_addr = Column(postgresql.INET, unique=True, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
+
+
+class OpenVasVuln(Base):
+    __tablename__ = 'openvas_vulns'
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(Text, unique=True, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
