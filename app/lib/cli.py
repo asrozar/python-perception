@@ -1,5 +1,5 @@
 import readline
-from app import db_session, nmap_tmp_dir, home_dir, splunk_sock
+from app import db_session, check_if_valid_address, system_uuid
 from subprocess import call, Popen, PIPE
 from app.database.models import OpenvasAdmin,\
     OpenvasLastUpdate,\
@@ -7,8 +7,8 @@ from app.database.models import OpenvasAdmin,\
     SeedRouter,\
     RSInfrastructure, \
     DiscoveryProtocolFinding
+from send_message import SendToRabbitMQ
 from sqlalchemy.exc import IntegrityError
-from re import match
 from socket import gethostbyaddr, herror
 
 # -------------------------------------------------------------------------------
@@ -45,74 +45,11 @@ class TabCompletion(object):
 # -------------------------------------------------------------------------------
 
 
-#def get_hosts_to_scan():
-
-#    hosts = db_session.query(LocalHost).all()
-#    if hosts:
-#        hosts_to_scan = []
-
-#        for host in hosts:
-#            hosts_to_scan.append(host.ip_addr)
-
-#        return hosts_to_scan
-
-
 def split_commands(command):
     cmd_list = list()
     cmd_list += command.split(' ')
 
     return cmd_list
-
-
-def check_if_valid_address(ipaddr):
-
-    # is a valid ipv4 address?
-    if match(r'^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.)'
-             r'{3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$', ipaddr):
-        return True
-
-    # is a valid ipv6 address?
-    elif match(r'^s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:)'
-               r'{6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:)'
-               r')|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]d|1dd|[1-9]?d)'
-               r'(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4})'
-               r'{1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]'
-               r'?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}'
-               r':((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:)'
-               r'{2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)'
-               r'(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|'
-               r'((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|'
-               r':))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)'
-               r'(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:)))(%.+)?s*', ipaddr):
-        return True
-
-    return False
-
-
-def check_if_valid_cider(cider):
-
-    # is a valid ipv4 cider?
-    if match(r'^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.)'
-             r'{3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$', cider):
-        return True
-
-    # is a valid ipv6 cider?
-    if match(r'^s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|'
-             r'((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:)'
-             r'{5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]'
-             r'?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?#'
-             r'((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:)'
-             r'{3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)'
-             r'(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|'
-             r'((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|'
-             r':))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|'
-             r'2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|'
-             r'((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|'
-             r':)))(%.+)?s*(\/(d|dd|1[0-1]d|12[0-8]))$', cider):
-        return True
-
-    return False
-
 
 # -------------------------------------------------------------------------------
 # Display Definitions
@@ -152,6 +89,7 @@ def display_help(mode):
         print('')
         print('config               Enter configuration mode.')
         print('show                 Display data.')
+        print('run                  Discovery or Vulnerability scan.')
         print_underscore()
 
     if mode == '(config)#':
@@ -382,12 +320,14 @@ def cli_loop(prefix, mode, v):
             if mode == '>':
                 readline.set_completer(TabCompletion(['config',
                                                       'show',
+                                                      'run',
                                                       'infrastructure',
                                                       'firewalls',
                                                       'seeds',
                                                       'openvas',
                                                       'nmap',
                                                       'discovery',
+                                                      'vuln_scan',
                                                       'all'
                                                       ]).complete)
             elif mode == '(config)#':
@@ -466,34 +406,35 @@ def cli_loop(prefix, mode, v):
                     # ------------------------------------------------------------------
                     # run commands
                     # ------------------------------------------------------------------
-                    # if cmd[0] == 'run':
-                    #    try:
-                    #        if cmd[1] == 'discovery':
-                    #            try:
-                    #                if cmd[2] == 'on':
-                    #                    ch_1 = check_if_valid_address(cmd[3])
-                    #
-                    #                    if ch_1:
-                    #                        # run_now = RunDiscovery(run=True, onhost=cmd[3])
-                    #
-                    #                        continue
-                    #                    continue
-                    #
-                    #            except IndexError:
-                    #                pass
-                    #
-                    #        hosts_to_scan = get_hosts_to_scan()
-                    #
-                    #       if hosts_to_scan:
-                    #
-                    #            # run_now = RunDiscovery(run=True)
-                    #            continue
-                    #
-                    #        else:
-                    #            print('You need to add local_hosts or a seed router')
-                    #    except IndexError:
-                    #        pass
-                    #
+                    if cmd[0] == 'run':
+                        try:
+                            if cmd[1] == 'discovery':
+                                try:
+                                    if cmd[2] == 'on':
+
+                                        SendToRabbitMQ('run_nmap_on %s' % cmd[3:],
+                                                       system_uuid,
+                                                       system_uuid)
+                                        continue
+
+                                except IndexError:
+                                    pass
+
+                            if cmd[1] == 'vuln_scan':
+                                try:
+                                    if cmd[2] == 'on':
+
+                                        SendToRabbitMQ('run_openvas_on %s' % cmd[3:],
+                                                       system_uuid,
+                                                       system_uuid)
+                                        continue
+
+                                except IndexError:
+                                    pass
+
+                        except IndexError:
+                            pass
+
                     # ------------------------------------------------------------------
                     # show commands
                     # ------------------------------------------------------------------
