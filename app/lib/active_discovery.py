@@ -1,9 +1,8 @@
 from os import makedirs, devnull, path, remove
-from re import match
 from subprocess import Popen, PIPE, call
-
-from app import config, splunk_sock
 from app.lib.xml_output_parser import parse_nmap_xml
+from app.lib.openvas import create_targets, create_task, delete_reports, delete_targets, delete_task, start_task, check_task, get_report
+from app import check_if_valid_cider, check_if_valid_address
 import threading
 import syslog
 import time
@@ -26,20 +25,35 @@ class RunNmap(object):
         t.start()
 
     @staticmethod
-    def nmap_ss_sv_scan(nmap, tmp_dir, host, mac, mac_vendor, adjacency_switch, adjacency_int):
+    def nmap_ss_sv_scan(nmap, tmp_dir, host, mac, mac_vendor, adjacency_switch, adjacency_int, addr_type):
+        port_scan = 1
+        xml_file = False
 
-        xml_file = '%s/%s.xml.%d' % (tmp_dir, host, int(time.time()))
+        if addr_type == 'host':
+            xml_file = '%s%s.xml.%d' % (tmp_dir, host, int(time.time()))
+            port_scan = call([nmap,
+                              '-sS',
+                              '-sV',
+                              host,
+                              '-Pn',
+                              '--open',
+                              '-oX',
+                              xml_file],
+                             shell=False,
+                             stdout=FNULL)
 
-        port_scan = call([nmap,
-                          '-sS',
-                          '-sV',
-                          host,
-                          '-Pn',
-                          '--open',
-                          '-oX',
-                          xml_file],
-                         shell=False,
-                         stdout=FNULL)
+        if addr_type == 'cider':
+            cider = host.replace('/', '_')
+            xml_file = '%s%s.xml.%d' % (tmp_dir, cider, int(time.time()))
+            port_scan = call([nmap,
+                              '-sS',
+                              '-sV',
+                              host,
+                              '--open',
+                              '-oX',
+                              xml_file],
+                             shell=False,
+                             stdout=FNULL)
 
         if port_scan == 0:
             return xml_file, mac, mac_vendor, adjacency_switch, adjacency_int
@@ -67,30 +81,117 @@ class RunNmap(object):
         # Kick off the nmap scan
         try:
 
-            ip_addr = match(r'\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'
-                            r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'
-                            r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'
-                            r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b', host)
+            cider = check_if_valid_cider(host)
+            ip_addr = check_if_valid_address(host)
 
-            if ip_addr:
+            if ip_addr or cider:
+                addr_type = None
+
+                if ip_addr:
+                    addr_type = 'host'
+                if cider:
+                    addr_type = 'cider'
+
                 nmap_scan_xml_path = self.nmap_ss_sv_scan(nmap,
                                                           tmp_dir,
                                                           host,
                                                           str(mac),
                                                           mac_vendor,
-                                                          str(adjacency_switch),
-                                                          adjacency_int)
+                                                          adjacency_switch,
+                                                          adjacency_int,
+                                                          addr_type)
 
                 if nmap_scan_xml_path == 99:
-                    syslog.syslog(syslog.LOG_INFO, 'Could not parse XML for host %s' % host)
+                    syslog.syslog(syslog.LOG_INFO, 'RunNmap error: Could not run on %s %s' % (addr_type, host))
 
                 else:
-                    parsed_results = parse_nmap_xml(nmap_scan_xml_path)
+                    parse_nmap_xml(nmap_scan_xml_path)
                     remove(nmap_scan_xml_path[0])
 
-                    if config['splunk_indexer']:
-                        splunk_sock('InventoryHost=%s' % str(parsed_results))
-                    return
-
         except TypeError as type_e:
-            syslog.syslog(syslog.LOG_INFO, 'Not ready to scan host: %s' % str(type_e))
+            syslog.syslog(syslog.LOG_INFO, 'RunNmap error: %s' % str(type_e))
+
+
+class RunOpenVas(object):
+    def __init__(self, host, openvas_user_username, openvas_user_password):
+        self.host = host
+        self.openvas_user_username = openvas_user_username
+        self.openvas_user_password = openvas_user_password
+
+        t = threading.Thread(target=self.run, args=(host, openvas_user_username, openvas_user_password))
+        t.start()
+
+    @staticmethod
+    def scan(host, openvas_user_username, openvas_user_password):
+
+        target_id = None
+        task_id = None
+        task_name = None
+
+        # if type(scan_list) is dict:
+
+        # if scan_list['lsc_type'] == 'ssh':
+        #    # create the targets to scan
+        #    target_id = create_targets_with_ssh_lsc('initial ssh scan targets',
+        #                                            openvas_user_username,
+        #                                            openvas_user_password,
+        #                                            scan_list['lsc_id'],
+        #                                            scan_list['host_list'])
+        #    task_name = 'scan using ssh'
+
+        # if scan_list['lsc_type'] == 'smb':
+        #    # create the targets to scan
+        #    target_id = create_targets_with_smb_lsc('initial smb scan targets',
+        #                                            openvas_user_username,
+        #                                            openvas_user_password,
+        #                                            scan_list['lsc_id'],
+        #                                            scan_list['host_list'])
+        #    task_name = 'scan using smb'
+
+        if type(host) is list:
+            # create the targets to scan
+            target_id = create_targets('%s.%d target' % (str(host), int(time.time())),
+                                       openvas_user_username,
+                                       openvas_user_password,
+                                       host)
+
+            task_name = '%s.%d scan' % (str(host), int(time.time()))
+
+        # setup the task
+        if target_id is not None:
+            task_id = create_task(task_name, target_id, openvas_user_username, openvas_user_password)
+
+        # run the task
+        if task_id is not None:
+            xml_report_id = start_task(task_id, openvas_user_username, openvas_user_password)
+
+            # wait until the task is done
+            while True:
+                check_task_response = check_task(task_id, openvas_user_username, openvas_user_password)
+                if check_task_response == 'Done' or check_task_response == 'Stopped':
+                    break
+                time.sleep(60)
+
+            # download and parse the report
+            if xml_report_id is not None:
+                get_report(xml_report_id, openvas_user_username, openvas_user_password)
+
+            # delete the task
+            if task_id is not None:
+                delete_task(task_id, openvas_user_username, openvas_user_password)
+
+            # delete the targets
+            if target_id is not None:
+                delete_targets(target_id, openvas_user_username, openvas_user_password)
+
+            # delete the report
+            if xml_report_id is not None:
+                delete_reports(xml_report_id, openvas_user_username, openvas_user_password)
+
+    def run(self, host, openvas_user_username, openvas_user_password):
+
+        try:
+            self.scan(host, openvas_user_username, openvas_user_password)
+
+        except Exception as openvas_e:
+            syslog.syslog(syslog.LOG_INFO, 'RunOpenVas error: %s' % str(openvas_e))
