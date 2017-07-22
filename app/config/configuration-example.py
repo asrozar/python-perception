@@ -23,6 +23,25 @@ discovery_mode = 'passive'
 # -------------------------------------
 svc_account_passwd = 'should_setup_pki'
 
+# -------------------------
+# MessageQueuing
+# -------------------------
+
+mq_host = 'mq_host'
+mq_port = 5671
+mq_ssl = True
+mq_user = 'mq_user'
+mq_password = 'mq_password'
+
+# --------------------------
+# Elasticsearch Indexer Info
+# --------------------------
+es_host = '127.0.0.1'
+es_port = 9200
+es_ssl = False
+es_index = 'perception'
+es_direct = True
+
 # -------------------
 # Splunk Indexer Info
 # -------------------
@@ -33,21 +52,3 @@ splunk_password = 'should_setup_pki'
 splunk_api_port = 8089
 splink_index = 'index_name'
 
-# -------------------------
-# Nessus hosts and API keys
-# -------------------------
-nessus_hosts = [
-
-    ('nessus.host1.net',
-     'nessus_access_key',
-     'nessus_secret_key'),
-
-    ('nessus.host2.net',
-     'nessus_access_key',
-     'nessus_secret_key')
-]
-
-# -------------------------
-# How often to check Nessus
-# -------------------------
-sleep_hours = 12
