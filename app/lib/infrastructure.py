@@ -42,6 +42,7 @@ from pexpect import spawnu, exceptions, TIMEOUT
 from re import search, sub
 import syslog
 import threading
+import time
 import json
 
 
@@ -516,7 +517,8 @@ class InterrogateRSI(object):
                                     'rsi_license_level': license_level,
                                     'rsi_system_serial_number': system_serial_number,
                                     'rsi_model_number': model_number,
-                                    'rsi_perception_product_uuid': system_uuid}
+                                    'rsi_perception_product_uuid': system_uuid,
+                                    'rsi_timestamp': int(time.time())}
 
                 for sec_addr_line in sec_addr_lines:
                     rsaddr = search(r'\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'
