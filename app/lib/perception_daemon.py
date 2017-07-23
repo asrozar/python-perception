@@ -43,7 +43,7 @@ class MessageBroker(object):
     def callback(ch, method, properties, body):
 
         try:
-            openvas_admin = db_session.query(OpenvasAdmin).order_by(OpenvasAdmin.id.desc()).first()
+            openvas_admin = db_session.query(OpenvasAdmin).filter(OpenvasAdmin.perception_product_uuid == system_uuid).order_by(OpenvasAdmin.id.desc()).first()
         except OperationalError as oe:
             syslog.syslog(syslog.LOG_INFO, 'Database OperationalError: %s' % oe)
             openvas_admin = False
@@ -126,21 +126,22 @@ class OpenVasUpdater(object):
 
                 try:
                     # verify openvas is configured
-                    openvas_user = db_session.query(OpenvasAdmin).first()
+                    openvas_admin = db_session.query(OpenvasAdmin).filter(
+                        OpenvasAdmin.perception_product_uuid == system_uuid).order_by(OpenvasAdmin.id.desc()).first()
 
                 except OperationalError as e:  # if it's not working
                     syslog.syslog(syslog.LOG_INFO, 'Could not Query for OpenVas Admin')
                     syslog.syslog(syslog.LOG_INFO, e)
                     return
 
-                if openvas_user is None:
+                if openvas_admin is None:
                     syslog.syslog(syslog.LOG_INFO, 'OpenVas needs to be configured, this will take some time.')
                     setup_openvas()  # configured it
-                    openvas_user = db_session.query(OpenvasAdmin).first()
 
                 # update openvas NVT's, CERT data, and CPE's
                 one_day_ago = datetime.now() - timedelta(hours=24)
-                check_last_update = db_session.query(OpenvasLastUpdate).order_by(OpenvasLastUpdate.id.desc()).first()
+                check_last_update = db_session.query(OpenvasLastUpdate).filter(
+                    OpenvasLastUpdate.perception_product_uuid == system_uuid).order_by(OpenvasLastUpdate.id.desc()).first()
 
                 if check_last_update is None or check_last_update.updated_at <= one_day_ago:
                     syslog.syslog(syslog.LOG_INFO, 'Updating OpenVas NVT, SCAP and CERT database')
@@ -159,8 +160,7 @@ class OpenVasUpdater(object):
 
                     except Exception as e:
                         db_session.rollback()
-                        syslog.syslog(syslog.LOG_INFO, e)
-                        print(e)
+                        syslog.syslog(syslog.LOG_INFO, 'OpenVas update error: %s' % str(e))
 
             except Exception as openvas_updater_e:
                 syslog.syslog(syslog.LOG_INFO, str(openvas_updater_e))
