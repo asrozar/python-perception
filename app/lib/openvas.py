@@ -12,7 +12,7 @@ import syslog
 
 redis_conf = '/etc/redis/redis.conf'
 port_regex = 's/^\(#.\)\?port.*$/port 0/'
-unixsocket_regex = 's/^\(#.\)\?unixsocket \/.*$/unixsocket \/var\/lib\/redis\/redis.sock/'
+unixsocket_regex = 's/^\(#.\)\?unixsocket \/.*$/unixsocket \/var\/run\/redis\/redis.sock/'
 unixsocketperm_regex = 's/^\(#.\)\?unixsocketperm.*$/unixsocketperm 700/'
 cacert_pem = '/var/lib/openvas/CA/cacert.pem'
 servercert_pem = '/var/lib/openvas/CA/servercert.pem'
@@ -201,9 +201,16 @@ def create_targets(targets_name, openvas_user_username, openvas_user_password, s
                                            '--password=%s' % openvas_user_password,
                                            '--xml=%s' % create_target_cli]).decode()
 
-    create_target_response_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', create_target_response).group(0)
+    error = search(r'status=\"503\"', create_target_response)
 
-    return create_target_response_id
+    if error:
+        syslog.syslog(syslog.LOG_INFO, str('OpenVas error: %s' % create_target_response))
+        return
+
+    create_target_response_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', create_target_response)
+
+    if create_target_response_id:
+        return create_target_response_id.group(0)
 
 
 #def create_targets_with_smb_lsc(targets_name, openvas_user_username, openvas_user_password, lsc_id, smb_scan_list):
@@ -259,9 +266,17 @@ def create_task(task_name, target_id, openvas_user_username, openvas_user_passwo
                                          '--password=%s' % openvas_user_password,
                                          '--xml=%s' % create_task_cli]).decode()
 
-    create_task_response_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', create_task_response).group(0)
+    error = search(r'status=\"503\"', create_task_response)
 
-    return create_task_response_id
+    if error:
+        syslog.syslog(syslog.LOG_INFO, str('OpenVas error: %s' % create_task_response))
+        return
+
+    create_task_response_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', create_task_response)
+
+    if create_task_response_id:
+
+        return create_task_response_id.group(0)
 
 
 #def create_lsc_credential(name, login, password, openvas_user_username, openvas_user_password):
@@ -297,8 +312,8 @@ def create_task(task_name, target_id, openvas_user_username, openvas_user_passwo
 
 
 def start_task(task_id, openvas_user_username, openvas_user_password):
-    start_task_cli = '<start_task task_id="%s"/>' % task_id
 
+    start_task_cli = '<start_task task_id="%s"/>' % task_id
     start_task_response = check_output(['omp',
                                         '--port=9390',
                                         '--host=localhost',
@@ -306,9 +321,16 @@ def start_task(task_id, openvas_user_username, openvas_user_password):
                                         '--password=%s' % openvas_user_password,
                                         '--xml=%s' % start_task_cli]).decode()
 
-    xml_report_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', start_task_response).group(0)
+    error = search(r'status=\"503\"', start_task_response).group(0)
 
-    return xml_report_id
+    if error:
+        syslog.syslog(syslog.LOG_INFO, str('OpenVas error: %s' % start_task_response))
+        return
+
+    xml_report_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', start_task_response)
+
+    if xml_report_id:
+        return xml_report_id.group(0)
 
 
 def check_task(task_id, openvas_user_username, openvas_user_password):
