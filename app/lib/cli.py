@@ -156,65 +156,6 @@ def show_openvas():
             print_underscore()
 
 
-def show_infrastructure():
-
-    rsi = db_session.query(RSInfrastructure).all()
-
-    if rsi:
-        show_display('Route Switch Infrastructure')
-        for rs in rsi:
-            try:
-                print('')
-                print('IP Address:                           %s' % rs.ip_addr)
-                try:
-                    print('Host Name:                            %s' % rs.host_name)
-                except AttributeError:
-                    print('Host Name:                            %s' % None)
-
-                print('Service User ID:                      %s' % rs.svc_users.username)
-                print('Operating System:                     %s' % rs.os_version)
-                print('License Level:                        %s' % rs.license_level)
-                print('System Serial Number:                 %s' % rs.system_serial_number)
-                print('System Model:                         %s' % rs.model_number)
-                print_underscore()
-
-            except Exception as rsi_e:
-                print(rsi_e)
-
-
-def show_discovery_protocol():
-
-    cdp = db_session.query(DiscoveryProtocolFinding).all()
-
-    if cdp:
-        show_display('Discovery Protocol data')
-
-        try:
-            for c in cdp:
-                print('')
-                if c.rsinfrastructure.host_name:
-                    print('Source Switch                        %s (%s)' % (c.rsinfrastructure.ip_addr,
-                                                                            c.rsinfrastructure.host_name))
-                else:
-                    print('Source Switch                        %s' % c.rsinfrastructure.ip_addr)
-
-                print('Remote Device                        %s' % c.remote_device_id)
-                print('Remote IP Address                    %s' % c.ip_addr)
-                print('Platform                             %s' % c.platform)
-                print('Capabilities                         %s' % c.capabilities)
-                print('Interface                            %s' % c.interface)
-                print('Port ID                              %s' % c.port_id)
-                print('Discovery Version                    %s' % c.discovery_version)
-                print('Protocol Hello                       %s' % c.protocol_hello)
-                print('VTP Domain                           %s' % c.vtp_domain)
-                print('Native VLAN                          %s' % c.native_vlan)
-                print('Duplex                               %s' % c.duplex)
-                print('Power Draw                           %s' % c.power_draw)
-                print_underscore()
-
-        except Exception as show_cdp_e:
-            print(show_cdp_e)
-
 # -------------------------------------------------------------------------------
 # Definitions to add data to the database
 # -------------------------------------------------------------------------------
@@ -241,14 +182,16 @@ def add_seeds(seed_info):
             hostname = None
 
         add_svc_user = SvcUser(username=username,
-                               description='Seed Router Service Account')
+                               description='Seed Router Service Account',
+                               perception_product_uuid=system_uuid)
 
         try:
             db_session.add(add_svc_user)
             db_session.flush()
             add_router = SeedRouter(ip_addr=ipaddr,
                                     svc_user_id=add_svc_user.id,
-                                    host_name=hostname)
+                                    host_name=hostname,
+                                    perception_product_uuid=system_uuid)
             db_session.add(add_router)
             db_session.commit()
 
@@ -257,7 +200,8 @@ def add_seeds(seed_info):
             user = db_session.query(SvcUser).filter_by(username=username).first()
             add_router = SeedRouter(ip_addr=ipaddr,
                                     svc_user_id=user.id,
-                                    host_name=hostname)
+                                    host_name=hostname,
+                                    perception_product_uuid=system_uuid)
             db_session.add(add_router)
             db_session.commit()
 
@@ -321,7 +265,6 @@ def cli_loop(prefix, mode, v):
                 readline.set_completer(TabCompletion(['config',
                                                       'show',
                                                       'run',
-                                                      'infrastructure',
                                                       'firewalls',
                                                       'seeds',
                                                       'openvas',
@@ -449,13 +392,8 @@ def cli_loop(prefix, mode, v):
                         elif cmd[1] == 'openvas':
                             show_openvas()
 
-                        elif cmd[1] == 'infrastructure':
-                            show_infrastructure()
-
                         elif cmd[1] == 'all':
                             show_seeds()
-                            show_infrastructure()
-                            show_discovery_protocol()
                             show_openvas()
                             # show_nmap()
 
