@@ -149,9 +149,14 @@ def parse_openvas_xml(openvas_xml):
                                  'openvas_vuln_threat_score': threat,
                                  'openvas_vuln_severity_score': severity,
                                  'openvas_vuln_xrefs': xrefs,
-                                 'openvas_vuln_tags': tags}
+                                 'openvas_vuln_tags': tags,
+                                 'openvas_vuln_perception_product_uuid': system_uuid}
 
-                openvas_vuln = get_or_create(openvas_db_session, OpenVasVuln, name=name)
+                openvas_vuln = get_or_create(openvas_db_session,
+                                             OpenVasVuln,
+                                             name=name,
+                                             perception_product_uuid=system_uuid)
+
                 openvas_json_data = json.dumps(vulnerability)
 
                 if config.es_direct:
@@ -432,7 +437,8 @@ def parse_nmap_xml(nmap_results):
                                   'nmap_discovery_adjacency_int': adjacency_int}
 
                 host_dict = {'nmap_discovery_inventory_host': inventory_host,
-                             'nmap_discovery_ports': port_dict_list}
+                             'nmap_discovery_ports': port_dict_list,
+                             'nmap_discovery_perception_product_uuid': system_uuid}
 
                 if ipv4:
                     ip_addr = ipv4
@@ -441,7 +447,11 @@ def parse_nmap_xml(nmap_results):
                     ip_addr = ipv6
 
                 if ip_addr is not None:
-                    nmap_host = get_or_create(nmap_db_session, NmapHost, ip_addr=ip_addr)
+                    nmap_host = get_or_create(nmap_db_session,
+                                              NmapHost,
+                                              ip_addr=ip_addr,
+                                              perception_product_uuid=system_uuid)
+
                     nmap_json_data = json.dumps(host_dict)
 
                     if config.es_direct:
