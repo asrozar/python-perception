@@ -24,6 +24,7 @@ def _get_date():
 def upgrade():
     op.create_table('rsaddrs',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
+                    sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('rsinfrastructure_id', sa.Integer, sa.ForeignKey('rsinfrastructure.id'), nullable=False),
                     sa.Column('ip_addr', postgresql.INET),
                     sa.Column('created_at', sa.TIMESTAMP(timezone=False), default=_get_date),

@@ -5,6 +5,7 @@ Revises: 13b7c3d4c802
 Create Date: 2017-07-21 12:19:35.711173
 
 """
+from sqlalchemy.dialects import postgresql
 from alembic import op
 import sqlalchemy as sa
 import datetime
@@ -23,6 +24,7 @@ depends_on = None
 def upgrade():
     op.create_table('openvas_vulns',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
+                    sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('name', sa.Text, unique=True, nullable=False),
                     sa.Column('created_at', sa.TIMESTAMP(timezone=False), default=_get_date))
 

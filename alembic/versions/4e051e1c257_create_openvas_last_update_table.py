@@ -12,6 +12,7 @@ down_revision = '46942860847'
 branch_labels = None
 depends_on = None
 
+from sqlalchemy.dialects import postgresql
 from alembic import op
 import sqlalchemy as sa
 import datetime
@@ -24,6 +25,7 @@ def _get_date():
 def upgrade():
     op.create_table('openvas_last_updates',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
+                    sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('updated_at', sa.TIMESTAMP(timezone=False), onupdate=_get_date))
 
 

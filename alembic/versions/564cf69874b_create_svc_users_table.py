@@ -25,6 +25,7 @@ def _get_date():
 def upgrade():
     op.create_table('svc_users',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
+                    sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('username', sa.String, nullable=False, unique=True),
                     sa.Column('description', sa.String),
                     sa.Column('created_at', sa.TIMESTAMP(timezone=False), default=_get_date),
