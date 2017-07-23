@@ -7,7 +7,7 @@ from subprocess import check_output, CalledProcessError, PIPE
 from time import sleep
 from app.lib.xml_output_parser import parse_openvas_xml
 from app.database.models import OpenvasAdmin, OpenvasLastUpdate
-from app import db_session
+from app import db_session, system_uuid
 import syslog
 
 redis_conf = '/etc/redis/redis.conf'
@@ -58,11 +58,12 @@ def setup_openvas():
     except OSError:
         ''
 
-    add_user = OpenvasAdmin(username='perception_admin',
+    add_user = OpenvasAdmin(perception_product_uuid=system_uuid,
+                            username='perception_admin',
                             password=new_user_passwd)
     db_session.add(add_user)
 
-    add_update_info = OpenvasLastUpdate(updated_at=datetime.now())
+    add_update_info = OpenvasLastUpdate(updated_at=datetime.now(), perception_product_uuid=system_uuid)
     db_session.add(add_update_info)
 
     db_session.commit()
