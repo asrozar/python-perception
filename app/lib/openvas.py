@@ -321,7 +321,7 @@ def start_task(task_id, openvas_user_username, openvas_user_password):
                                         '--password=%s' % openvas_user_password,
                                         '--xml=%s' % start_task_cli]).decode()
 
-    error = search(r'status=\"503\"', start_task_response).group(0)
+    error = search(r'status=\"503\"', start_task_response)
 
     if error:
         syslog.syslog(syslog.LOG_INFO, str('OpenVas error: %s' % start_task_response))
