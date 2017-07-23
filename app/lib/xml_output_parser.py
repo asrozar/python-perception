@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 import syslog
 import json
+import time
 from socket import gethostbyaddr, herror
 from app import get_or_create, Session, system_uuid, es_put_document, config
 from app.database.models import NmapHost, OpenVasVuln
@@ -438,7 +439,8 @@ def parse_nmap_xml(nmap_results):
 
                 host_dict = {'nmap_discovery_inventory_host': inventory_host,
                              'nmap_discovery_ports': port_dict_list,
-                             'nmap_discovery_perception_product_uuid': system_uuid}
+                             'nmap_discovery_perception_product_uuid': system_uuid,
+                             'nmap_discovery_timestamp': int(time.time())}
 
                 if ipv4:
                     ip_addr = ipv4
