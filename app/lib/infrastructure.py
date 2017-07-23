@@ -26,7 +26,9 @@ from app import IOS_SHOW_ARP,\
     SSH_OUTDATED_PROTOCOL, \
     config, \
     nmap_tmp_dir, \
-    Session
+    Session, \
+    system_uuid, \
+    hostname_lookup
 from app.lib.active_discovery import RunNmap
 from app.database.models import RSInfrastructure,\
     RSAddr,\
@@ -343,13 +345,14 @@ class InterrogateRSI(object):
         self.svc_user_id = svc_user_id
         self.seed = seed
 
-        t = threading.Thread(target=self.run, args=(host_name, ip_addr, username, svc_user_id, seed))
-        t.start()
-        #self.run(host_name,
-        #         ip_addr,
-        #         username,
-        #         svc_user_id,
-        #         seed)
+        #t = threading.Thread(target=self.run, args=(host_name, ip_addr, username, svc_user_id, seed))
+        #t.start()
+
+        self.run(host_name,
+                 ip_addr,
+                 username,
+                 svc_user_id,
+                 seed)
 
     @staticmethod
     def interrogate(username, host):
@@ -509,10 +512,11 @@ class InterrogateRSI(object):
                             model_number = ws_model_num_match.group(0)
                             break
 
-                rsinfrastructure = {'os_version': os_version,
-                                    'license_level': license_level,
-                                    'system_serial_number': system_serial_number,
-                                    'model_number': model_number}
+                rsinfrastructure = {'rsi_os_version': os_version,
+                                    'rsi_license_level': license_level,
+                                    'rsi_system_serial_number': system_serial_number,
+                                    'rsi_model_number': model_number,
+                                    'rsi_perception_product_uuid': system_uuid}
 
                 for sec_addr_line in sec_addr_lines:
                     rsaddr = search(r'\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'
@@ -520,8 +524,7 @@ class InterrogateRSI(object):
                                     r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'
                                     r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b', sec_addr_line)
                     if rsaddr:
-                        d = {'host': host,
-                             'rsaddr': str(rsaddr.group(0))}
+                        d = {'rsaddr': str(rsaddr.group(0))}
 
                         secondary_addrs_dict_list.append(d)
 
@@ -564,9 +567,10 @@ class InterrogateRSI(object):
 
                         for addr in adjacency_addrs_list:
                             if ip_addrs.group(0) in addr:
-                                host_dict = {'ip_addr': ip_addrs.group(0),
-                                             'mac_addr': mac_addrs.group(0),
-                                             'adjacency_int': addr[ip_addrs.group(0)]}
+                                host_dict = {'local_host_ip_addr': ip_addrs.group(0),
+                                             'local_host_mac_addr': mac_addrs.group(0),
+                                             'local_host_adjacency_int': addr[ip_addrs.group(0)]}
+
                                 local_host_dict_list.append(host_dict)
 
                 for cam_line in cam_lines:
@@ -581,11 +585,11 @@ class InterrogateRSI(object):
                         else:
                             vlan_id = mac_addrs_line_split[0]
 
-                        mac_addr_dict = {'host': host,
-                                         'mac_addr': mac_addrs_line_split[1],
-                                         'type': mac_addrs_line_split[2],
-                                         'port': mac_addrs_line_split[3].strip('\r\n'),
-                                         'vlan': int(vlan_id)}
+                        mac_addr_dict = {'mac_table_mac_addr': mac_addrs_line_split[1],
+                                         'mac_table_type': mac_addrs_line_split[2],
+                                         'mac_table_port': mac_addrs_line_split[3].strip('\r\n'),
+                                         'mac_table_vlan': int(vlan_id)}
+
                         mac_dict_list.append(mac_addr_dict)
 
                 for element in data_list:
@@ -758,7 +762,7 @@ class InterrogateRSI(object):
 
             try:
                 rsi_db_session.query(SeedRouter).filter(SeedRouter.ip_addr == ip_addr).delete()
-                do_not_seed = HostUsingSshv1(ip_addr=ip_addr)
+                do_not_seed = HostUsingSshv1(ip_addr=ip_addr, perception_product_uuid=system_uuid)
                 rsi_db_session.add(do_not_seed)
                 rsi_db_session.commit()
                 syslog.syslog(syslog.LOG_INFO, 'VULNERABILITY: %s is currently using SSHv1' % ip_addr)
@@ -776,7 +780,7 @@ class InterrogateRSI(object):
 
             try:
                 rsi_db_session.query(SeedRouter).filter(SeedRouter.ip_addr == ip_addr).delete()
-                do_not_seed = HostWithBadSshKey(ip_addr=ip_addr)
+                do_not_seed = HostWithBadSshKey(ip_addr=ip_addr, perception_product_uuid=system_uuid)
                 rsi_db_session.add(do_not_seed)
                 rsi_db_session.commit()
                 syslog.syslog(syslog.LOG_INFO, 'DANGER: SSH key for %s has changed' % ip_addr)
@@ -794,7 +798,7 @@ class InterrogateRSI(object):
 
             try:
                 rsi_db_session.query(SeedRouter).filter(SeedRouter.ip_addr == ip_addr).delete()
-                do_not_seed = DoNotSeed(ip_addr=ip_addr)
+                do_not_seed = DoNotSeed(ip_addr=ip_addr, perception_product_uuid=system_uuid)
                 rsi_db_session.add(do_not_seed)
                 rsi_db_session.commit()
                 syslog.syslog(syslog.LOG_INFO, 'INFO: Perception can not access %s' % ip_addr)
@@ -825,14 +829,10 @@ class InterrogateRSI(object):
         mac_dict_list = interrogation[4]
         discovery_dict_list = interrogation[5]
 
-        rsi = RSInfrastructure(ip_addr=ip_addr,
+        rsi = RSInfrastructure(perception_product_uuid=system_uuid,
+                               ip_addr=ip_addr,
                                host_name=host_name,
-                               svc_user_id=svc_user_id,
-                               os_version=rsinfrastructure_dict['os_version'],
-                               license_level=rsinfrastructure_dict['license_level'],
-                               system_serial_number=rsinfrastructure_dict['system_serial_number'],
-                               model_number=rsinfrastructure_dict['model_number'],
-                               last_investigation=datetime.datetime.now())
+                               svc_user_id=svc_user_id)
 
         try:
 
@@ -841,15 +841,13 @@ class InterrogateRSI(object):
             rsi_db_session.commit()
 
         except IntegrityError:
+            syslog.syslog(syslog.LOG_INFO, 'start IntegrityError')
             rsi_db_session.rollback()
             rsi_db_session.query(RSInfrastructure).filter(RSInfrastructure.ip_addr == ip_addr).\
-                update({'ip_addr': ip_addr,
+                update({'perception_product_uuid': system_uuid,
+                        'ip_addr': ip_addr,
                         'host_name': host_name,
-                        'svc_user_id': svc_user_id,
-                        'os_version': rsinfrastructure_dict['os_version'],
-                        'license_level': rsinfrastructure_dict['license_level'],
-                        'system_serial_number': rsinfrastructure_dict['system_serial_number'],
-                        'model_number': rsinfrastructure_dict['model_number']})
+                        'svc_user_id': svc_user_id})
             rsi_db_session.commit()
             rsi = rsi_db_session.query(RSInfrastructure).filter(RSInfrastructure.ip_addr == ip_addr).first()
 
@@ -860,103 +858,60 @@ class InterrogateRSI(object):
             rsi_db_session.commit()
 
         for a in secondary_addrs_dicst_list:
-            add_rsaddr = RSAddr(rsinfrastructure_id=rsi.id,
+            add_rsaddr = RSAddr(perception_product_uuid=system_uuid,
+                                rsinfrastructure_id=rsi.id,
                                 ip_addr=a['rsaddr'])
             rsi_db_session.add(add_rsaddr)
             rsi_db_session.commit()
 
         for c in discovery_dict_list:
-            cdp_data = DiscoveryProtocolFinding(rsinfrastructure_id=rsi.id,
-                                                remote_device_id=c['Device ID'],
+            cdp_data = DiscoveryProtocolFinding(perception_product_uuid=system_uuid,
+                                                rsinfrastructure_id=rsi.id,
                                                 ip_addr=c['IP'],
                                                 platform=c['Platform'],
-                                                capabilities=c['Capabilities'],
-                                                interface=c['Interface'],
-                                                port_id=c['Port ID (outgoing port)'],
-                                                discovery_version=c['advertisement version'],
-                                                protocol_hello=c['Protocol Hello'],
-                                                vtp_domain=c['VTP Management Domain'],
-                                                native_vlan=c['Native VLAN'],
-                                                duplex=c['Duplex'],
-                                                power_draw=c['Power drawn'])
+                                                capabilities=c['Capabilities'])
+
             try:
                 rsi_db_session.add(cdp_data)
                 rsi_db_session.commit()
             except Exception as e:
                 syslog.syslog(syslog.LOG_INFO, str(e))
 
-        # -------------------------------------------------------------------------------
-        # The remaining data is indexed only
-        # -------------------------------------------------------------------------------
+        rsinfrastructure_dict['rsi_secondary_addrs'] = secondary_addrs_dicst_list
+        rsinfrastructure_dict['rsi_local_hosts'] = local_host_dict_list
+        rsinfrastructure_dict['rsi_local_subnets'] = local_subnets_dict_list
+        rsinfrastructure_dict['rsi_mac_table'] = mac_dict_list
+        rsinfrastructure_dict['rsi_discovery_protocol'] = discovery_dict_list
 
-        for m in mac_dict_list:
+        rsi_json_data = json.dumps(rsinfrastructure_dict)
 
-            mac_addr_table = {'rsinfrastructure_mac_table_source': rsi.ip_addr,
-                              'rsinfrastructure_mac_table_mac_addr': str(m['mac_addr']),
-                              'rsinfrastructure_mac_table_type': str(m['type']),
-                              'rsinfrastructure_mac_table_port': str(m['port']),
-                              'rsinfrastructure_mac_table_vlan': m['vlan']}
+        if config.es_direct:
+            es_put_document(config.es_host,
+                            config.es_port,
+                            config.es_index,
+                            'rsi',
+                            str(rsi.id),
+                            rsi_json_data)
 
-            mac_addr_table_json_data = json.dumps(mac_addr_table)
-            if config.es_direct:
-                es_put_document(config.es_host,
-                                config.es_port,
-                                config.es_index,
-                                'rsi_mac_addr_table',
-                                str(rsi.id),
-                                mac_addr_table_json_data)
+        if config.discovery_mode == 'active':
+            for h in local_host_dict_list:
 
-        for h in local_host_dict_list:
+                mac_lookup_string = h['local_host_mac_addr'].replace('.', '')
+                try:
+                    mac_vendor_lookup = check_output(['grep',
+                                                      mac_lookup_string[:6].upper(),
+                                                      '/usr/share/nmap/nmap-mac-prefixes'])
+                    mac_vendor = ' '.join(mac_vendor_lookup.strip().split(' ')[1:])
 
-            local_host = {'rsinfrastructure_local_host_ip_addr': str(h['ip_addr']),
-                          'rsinfrastructure_local_host_source': rsi.ip_addr,
-                          'rsinfrastructure_local_host_mac_addr': str(h['mac_addr']),
-                          'rsinfrastructure_local_host_adjacency_int': str(h['adjacency_int'])}
+                except CalledProcessError:
+                    mac_vendor = None
 
-            local_host_json_data = json.dumps(local_host)
-
-            if config.es_direct:
-                es_put_document(config.es_host,
-                                config.es_port,
-                                config.es_index,
-                                'rsi_local_host',
-                                None,
-                                local_host_json_data)
-
-            mac_lookup_string = h['mac_addr'].replace('.', '')
-
-            try:
-                mac_vendor_lookup = check_output(['grep',
-                                                  mac_lookup_string[:6].upper(),
-                                                  '/usr/share/nmap/nmap-mac-prefixes'])
-                mac_vendor = ' '.join(mac_vendor_lookup.strip().split(' ')[1:])
-
-            except CalledProcessError:
-                mac_vendor = None
-
-            if config.discovery_mode == 'active':
                 RunNmap(nmap_tmp_dir,
-                        h['ip_addr'],
-                        h['mac_addr'],
+                        h['local_host_ip_addr'],
+                        h['local_host_mac_addr'],
                         mac_vendor,
                         '%s (%s)' % (rsi.ip_addr, rsi.host_name),
-                        h['adjacency_int'])
-
-        for l in local_subnets_dict_list:
-
-            local_subnet = {'rsinfrastructure_local_subnet_source': rsi.ip_addr,
-                            'rsinfrastructure_local_subnet': str(l['subnet']),
-                            'rsinfrastructure_local_subnet_source_int': str(l['source_int'])}
-
-            local_subnet_json_data = json.dumps(local_subnet)
-
-            if config.es_direct:
-                es_put_document(config.es_host,
-                                config.es_port,
-                                config.es_index,
-                                'rsi_local_subnet',
-                                None,
-                                local_subnet_json_data)
+                        h['local_host_adjacency_int'])
 
         rsi_db_session.close()
         return
