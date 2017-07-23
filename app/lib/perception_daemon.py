@@ -151,7 +151,7 @@ class OpenVasUpdater(object):
                         # migrate and rebuild the db
                         migrate_rebuild_db()
 
-                        add_update_info = OpenvasLastUpdate(updated_at=datetime.now())
+                        add_update_info = OpenvasLastUpdate(updated_at=datetime.now(), perception_product_uuid=system_uuid)
                         db_session.add(add_update_info)
                         db_session.commit()
                         syslog.syslog(syslog.LOG_INFO,
@@ -248,7 +248,8 @@ class DiscoveryProtocolSpider(object):
 
                                 add_to_seed = SeedRouter(ip_addr=finding.ip_addr,
                                                          svc_user_id=find_seed_account.id,
-                                                         host_name=hostname)
+                                                         host_name=hostname,
+                                                         perception_product_uuid=system_uuid)
                                 db_session.add(add_to_seed)
                                 db_session.commit()
 
