@@ -95,7 +95,7 @@ class RunNmap(object):
                 nmap_scan_xml_path = self.nmap_ss_sv_scan(nmap,
                                                           tmp_dir,
                                                           host,
-                                                          str(mac),
+                                                          mac,
                                                           mac_vendor,
                                                           adjacency_switch,
                                                           adjacency_int,
@@ -127,26 +127,6 @@ class RunOpenVas(object):
         target_id = None
         task_id = None
         task_name = None
-
-        # if type(scan_list) is dict:
-
-        # if scan_list['lsc_type'] == 'ssh':
-        #    # create the targets to scan
-        #    target_id = create_targets_with_ssh_lsc('initial ssh scan targets',
-        #                                            openvas_user_username,
-        #                                            openvas_user_password,
-        #                                            scan_list['lsc_id'],
-        #                                            scan_list['host_list'])
-        #    task_name = 'scan using ssh'
-
-        # if scan_list['lsc_type'] == 'smb':
-        #    # create the targets to scan
-        #    target_id = create_targets_with_smb_lsc('initial smb scan targets',
-        #                                            openvas_user_username,
-        #                                            openvas_user_password,
-        #                                            scan_list['lsc_id'],
-        #                                            scan_list['host_list'])
-        #    task_name = 'scan using smb'
 
         if type(host) is list:
             # create the targets to scan
