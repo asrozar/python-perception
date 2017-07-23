@@ -145,28 +145,30 @@ class RunOpenVas(object):
         if task_id is not None:
             xml_report_id = start_task(task_id, openvas_user_username, openvas_user_password)
 
-            # wait until the task is done
-            while True:
-                check_task_response = check_task(task_id, openvas_user_username, openvas_user_password)
-                if check_task_response == 'Done' or check_task_response == 'Stopped':
-                    break
-                time.sleep(60)
+            if xml_report_id:
 
-            # download and parse the report
-            if xml_report_id is not None:
-                get_report(xml_report_id, openvas_user_username, openvas_user_password)
+                # wait until the task is done
+                while True:
+                    check_task_response = check_task(task_id, openvas_user_username, openvas_user_password)
+                    if check_task_response == 'Done' or check_task_response == 'Stopped':
+                        break
+                    time.sleep(60)
 
-            # delete the task
-            if task_id is not None:
-                delete_task(task_id, openvas_user_username, openvas_user_password)
+                # download and parse the report
+                if xml_report_id is not None:
+                    get_report(xml_report_id, openvas_user_username, openvas_user_password)
 
-            # delete the targets
-            if target_id is not None:
-                delete_targets(target_id, openvas_user_username, openvas_user_password)
+                # delete the task
+                if task_id is not None:
+                    delete_task(task_id, openvas_user_username, openvas_user_password)
 
-            # delete the report
-            if xml_report_id is not None:
-                delete_reports(xml_report_id, openvas_user_username, openvas_user_password)
+                # delete the targets
+                if target_id is not None:
+                    delete_targets(target_id, openvas_user_username, openvas_user_password)
+
+                # delete the report
+                if xml_report_id is not None:
+                    delete_reports(xml_report_id, openvas_user_username, openvas_user_password)
 
     def run(self, host, openvas_user_username, openvas_user_password):
 
