@@ -841,7 +841,6 @@ class InterrogateRSI(object):
             rsi_db_session.commit()
 
         except IntegrityError:
-            syslog.syslog(syslog.LOG_INFO, 'start IntegrityError')
             rsi_db_session.rollback()
             rsi_db_session.query(RSInfrastructure).filter(RSInfrastructure.ip_addr == ip_addr).\
                 update({'perception_product_uuid': system_uuid,
