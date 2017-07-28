@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from app import db_session, hostname_lookup, config, nmap_tmp_dir, system_uuid, es_put_document
+from app import db_session, hostname_lookup, config, nmap_tmp_dir, system_uuid, es_add_document
 from signal import SIGTERM
 from os import remove, path, kill, getpid, chdir, dup2, fork, setsid, umask
 from sqlalchemy.exc import OperationalError
@@ -78,7 +78,7 @@ class MessageBroker(object):
         elif send_to_elasticsearch:
              send_to_elasticsearch = body.split('|')
              es_json_data = json.dumps(send_to_elasticsearch[3])
-             es_put_document(config.es_host,
+             es_add_document(config.es_host,
                              config.es_port,
                              config.es_index,
                              send_to_elasticsearch[1],

@@ -3,7 +3,7 @@ import syslog
 import json
 import time
 from socket import gethostbyaddr, herror
-from app import get_or_create, Session, system_uuid, es_put_document, config
+from app import get_or_create, Session, system_uuid, es_add_document, config
 from app.database.models import NmapHost, OpenVasVuln
 from send_message import SendToRabbitMQ
 
@@ -161,7 +161,7 @@ def parse_openvas_xml(openvas_xml):
                 openvas_json_data = json.dumps(vulnerability)
 
                 if config.es_direct:
-                    es_put_document(config.es_host,
+                    es_add_document(config.es_host,
                                     config.es_port,
                                     config.es_index,
                                     'openvas',
@@ -457,7 +457,7 @@ def parse_nmap_xml(nmap_results):
                     nmap_json_data = json.dumps(host_dict)
 
                     if config.es_direct:
-                        es_put_document(config.es_host,
+                        es_add_document(config.es_host,
                                         config.es_port,
                                         config.es_index,
                                         'nmap',

@@ -1,6 +1,6 @@
 import datetime
 from sqlalchemy.exc import IntegrityError
-from app import es_put_document
+from app import es_add_document
 from app import IOS_SHOW_ARP,\
     IOS_TERMLEN0,\
     IOS_SHOW_ADJACENCY,\
@@ -887,7 +887,7 @@ class InterrogateRSI(object):
         rsi_json_data = json.dumps(rsinfrastructure_dict)
 
         if config.es_direct:
-            es_put_document(config.es_host,
+            es_add_document(config.es_host,
                             config.es_port,
                             config.es_index,
                             'rsi',
