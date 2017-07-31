@@ -31,7 +31,6 @@ with open('/etc/product_uuid', 'r') as f:
         print('Error: System UUID not found')
         exit(99)
 
-
 # --------
 # app info
 # --------
