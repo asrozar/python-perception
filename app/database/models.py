@@ -36,8 +36,7 @@ class SvcUser(Base):
         def __init__(self,
                      perception_product_uuid,
                      username=None,
-                     description=None,
-                     openvas_lsc_id=None):
+                     description=None):
 
             self.perception_product_uuid = perception_product_uuid
 
@@ -46,9 +45,6 @@ class SvcUser(Base):
 
             if username:
                 self.username = username
-
-            if openvas_lsc_id:
-                self.openvas_lsc_id = openvas_lsc_id
 
 
 class RSInfrastructure(Base):
