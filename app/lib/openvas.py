@@ -1,5 +1,5 @@
 from OpenSSL import crypto
-from datetime import datetime
+from django.utils import timezone
 from os import path, makedirs, system
 from subprocess import call
 from re import match, search
@@ -63,7 +63,7 @@ def setup_openvas():
                             password=new_user_passwd)
     db_session.add(add_user)
 
-    add_update_info = OpenvasLastUpdate(updated_at=datetime.now(), perception_product_uuid=system_uuid)
+    add_update_info = OpenvasLastUpdate(updated_at=timezone.now(), perception_product_uuid=system_uuid)
     db_session.add(add_update_info)
 
     db_session.commit()

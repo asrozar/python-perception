@@ -15,11 +15,11 @@ depends_on = None
 from alembic import op
 from sqlalchemy.dialects import postgresql
 import sqlalchemy as sa
-import datetime
+from django.utils import timezone
 
 
 def _get_date():
-  return datetime.datetime.now()
+  return timezone.now()
 
 
 def upgrade():
@@ -30,7 +30,7 @@ def upgrade():
                     sa.Column('ip_addr', postgresql.INET),
                     sa.Column('platform', sa.Text),
                     sa.Column('capabilities', sa.Text),
-                    sa.Column('created_at', sa.TIMESTAMP(timezone=False), default=_get_date))
+                    sa.Column('created_at', sa.TIMESTAMP, default=_get_date))
 
 
 def downgrade():

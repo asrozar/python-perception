@@ -15,18 +15,18 @@ depends_on = None
 from sqlalchemy.dialects import postgresql
 from alembic import op
 import sqlalchemy as sa
-import datetime
+from django.utils import timezone
 
 
 def _get_date():
-    return datetime.datetime.now()
+    return timezone.now()
 
 
 def upgrade():
     op.create_table('openvas_last_updates',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
                     sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
-                    sa.Column('updated_at', sa.TIMESTAMP(timezone=False), onupdate=_get_date))
+                    sa.Column('updated_at', sa.TIMESTAMP, default=_get_date))
 
 
 def downgrade():

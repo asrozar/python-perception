@@ -8,11 +8,11 @@ Create Date: 2017-07-21 08:19:17.849112
 from sqlalchemy.dialects import postgresql
 from alembic import op
 import sqlalchemy as sa
-import datetime
+from django.utils import timezone
 
 
 def _get_date():
-    return datetime.datetime.now()
+    return timezone.now()
 
 # revision identifiers, used by Alembic.
 revision = '13b7c3d4c802'
@@ -26,7 +26,7 @@ def upgrade():
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
                     sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('ip_addr', postgresql.INET, unique=True, nullable=False),
-                    sa.Column('created_at', sa.TIMESTAMP(timezone=False), default=_get_date))
+                    sa.Column('created_at', sa.TIMESTAMP, default=_get_date))
 
 
 def downgrade():

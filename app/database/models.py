@@ -1,4 +1,4 @@
-import datetime
+from django.utils import timezone
 from sqlalchemy import Column, Integer, Text, ForeignKey, TIMESTAMP, String
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
@@ -8,7 +8,7 @@ Base = declarative_base()
 
 
 def _get_date():
-    return datetime.datetime.now()
+    return timezone.now()
 
 
 class OpenvasAdmin(Base):
@@ -18,8 +18,8 @@ class OpenvasAdmin(Base):
     perception_product_uuid = Column(postgresql.UUID, nullable=False)
     username = Column(Text, nullable=False)
     password = Column(postgresql.UUID, nullable=False)
-    created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
-    updated_at = Column(TIMESTAMP(timezone=False), onupdate=_get_date)
+    created_at = Column(TIMESTAMP, default=_get_date)
+    updated_at = Column(TIMESTAMP, default=_get_date)
 
 
 class SvcUser(Base):
@@ -30,8 +30,8 @@ class SvcUser(Base):
         username = Column(String, nullable=False, unique=True)
         description = Column(String)
 
-        created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
-        updated_at = Column(TIMESTAMP(timezone=False), onupdate=_get_date)
+        created_at = Column(TIMESTAMP, default=_get_date)
+        updated_at = Column(TIMESTAMP, default=_get_date)
 
         def __init__(self,
                      perception_product_uuid,
@@ -59,8 +59,8 @@ class RSInfrastructure(Base):
     svc_user_id = Column(Integer, ForeignKey('svc_users.id'))
     svc_users = relationship('SvcUser', backref='rsinfrastructure', order_by=id)
 
-    created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
-    updated_at = Column(TIMESTAMP(timezone=False), default=_get_date)
+    created_at = Column(TIMESTAMP, default=_get_date)
+    updated_at = Column(TIMESTAMP, default=_get_date)
 
     def __init__(self,
                  perception_product_uuid,
@@ -88,8 +88,8 @@ class RSAddr(Base):
 
     ip_addr = Column(postgresql.INET, nullable=False)
 
-    created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
-    updated_at = Column(TIMESTAMP(timezone=False), default=_get_date)
+    created_at = Column(TIMESTAMP, default=_get_date)
+    updated_at = Column(TIMESTAMP, default=_get_date)
 
 
 class DiscoveryProtocolFinding(Base):
@@ -105,7 +105,7 @@ class DiscoveryProtocolFinding(Base):
     ip_addr = Column(postgresql.INET)
     platform = Column(Text)
     capabilities = Column(Text)
-    created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
+    created_at = Column(TIMESTAMP, default=_get_date)
 
 
 class SeedRouter(Base):
@@ -120,7 +120,7 @@ class SeedRouter(Base):
     svc_user_id = Column(Integer, ForeignKey('svc_users.id', ondelete='cascade'))
     svc_users = relationship('SvcUser', backref='seed_routers', order_by=id)
 
-    created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
+    created_at = Column(TIMESTAMP, default=_get_date)
 
     def __init__(self,
                  perception_product_uuid,
@@ -141,7 +141,7 @@ class OpenvasLastUpdate(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     perception_product_uuid = Column(postgresql.UUID, nullable=False)
-    updated_at = Column(TIMESTAMP(timezone=False), nullable=False)
+    updated_at = Column(TIMESTAMP, nullable=False)
 
 
 class DoNotSeed(Base):
@@ -174,7 +174,7 @@ class NmapHost(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     perception_product_uuid = Column(postgresql.UUID, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
-    created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
+    created_at = Column(TIMESTAMP, default=_get_date)
 
 
 class OpenVasVuln(Base):
@@ -183,4 +183,4 @@ class OpenVasVuln(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     perception_product_uuid = Column(postgresql.UUID, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
-    created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
+    created_at = Column(TIMESTAMP, default=_get_date)
