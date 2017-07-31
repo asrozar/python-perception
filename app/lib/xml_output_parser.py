@@ -8,7 +8,7 @@ from app.database.models import NmapHost, OpenVasVuln
 from send_message import SendToRabbitMQ
 
 
-def parse_openvas_xml(openvas_xml):
+def parse_openvas_xml(openvas_xml, *args):
 
     name = None
     cvss = None
@@ -68,12 +68,53 @@ def parse_openvas_xml(openvas_xml):
 
         return lsc_list
 
+    # parse get_info
+    if root.tag == 'get_info_response':
+
+        if args[0] == 'nvt_oids':
+            nvt_dict_list = list()
+            nvt_list = list()
+            family_names = list()
+
+            for x in root.iter('nvt'):
+                try:
+                    nvt_family = x.find('family').text
+                except AttributeError:
+                    continue
+
+                d = dict()
+                oid = x.attrib['oid']
+                d['family'] = nvt_family
+                d['oid'] = oid
+                nvt_list.append(d)
+
+            for d in nvt_list:
+                if d['family'] not in family_names:
+                    family_names.append(d['family'])
+
+            for fam in family_names:
+                oid_list = list()
+
+                for nvtd in nvt_list:
+                    if nvtd['family'] == fam:
+                        oid_list.append(nvtd['oid'])
+
+                fam_d = dict()
+                fam_d['family'] = fam
+                fam_d['oids'] = oid_list
+
+                nvt_dict_list.append(fam_d)
+
+            return nvt_dict_list
+
     # parse get_reports_response
     if root.tag == 'get_reports_response':
 
         openvas_db_session = Session()
 
         results = root.iter('result')
+        vulnerability_list = list()
+        host_list = list()
 
         for result in results:
 
@@ -84,6 +125,8 @@ def parse_openvas_xml(openvas_xml):
 
             try:
                 host = result.find('host').text
+                if host not in host_list:
+                    host_list.append(host)
             except AttributeError:
                 pass
 
@@ -145,38 +188,41 @@ def parse_openvas_xml(openvas_xml):
                                  'openvas_vuln_cve_id': cve,
                                  'openvas_vuln_family': family,
                                  'openvas_vuln_bug_id': bid,
-                                 'openvas_vuln_inventory_host': host,
                                  'openvas_vuln_port': port,
                                  'openvas_vuln_threat_score': threat,
                                  'openvas_vuln_severity_score': severity,
                                  'openvas_vuln_xrefs': xrefs,
-                                 'openvas_vuln_tags': tags,
-                                 'openvas_vuln_perception_product_uuid': system_uuid}
+                                 'openvas_vuln_tags': tags}
 
-                openvas_vuln = get_or_create(openvas_db_session,
-                                             OpenVasVuln,
-                                             name=name,
-                                             perception_product_uuid=system_uuid)
+                vulnerability_list.append(vulnerability)
 
-                openvas_json_data = json.dumps(vulnerability)
+        if len(host_list) == 1:
 
-                if config.es_direct:
-                    es_add_document(config.es_host,
-                                    config.es_port,
-                                    config.es_index,
-                                    'openvas',
-                                    str(openvas_vuln.id),
-                                    openvas_json_data)
+            vuln_host = {'openvas_vuln_perception_product_uuid': system_uuid,
+                         'openvas_vuln_scan_timestamp': int(time.time()),
+                         'vulns': vulnerability_list}
 
-                # SendToRabbitMQ('send_to_elasticsearch |%s|%s|%s' % ('openvas',
-                #                                                     str(openvas_vuln.id),
-                #                                                     vulnerability),
-                #                system_uuid,
-                #                system_uuid)
+            openvas_vuln = get_or_create(openvas_db_session,
+                                         OpenVasVuln,
+                                         ip_addr=host_list[0],
+                                         perception_product_uuid=system_uuid)
 
-        openvas_db_session.close()
+            openvas_json_data = json.dumps(vuln_host)
 
-    return 0
+            if config.es_direct:
+                es_add_document(config.es_host,
+                                config.es_port,
+                                config.es_index,
+                                'openvas',
+                                str(openvas_vuln.id),
+                                openvas_json_data)
+
+            openvas_db_session.close()
+            return 0
+
+        else:
+            openvas_db_session.close()
+            return 99
 
 
 def parse_nmap_xml(nmap_results):
@@ -192,9 +238,12 @@ def parse_nmap_xml(nmap_results):
     try:
         #  Find all the hosts in the nmap scan
         nmap_db_session = Session()
+        host_list = list()
+
         for host in root.findall('host'):
 
             port_dict_list = list()
+            port_list = list()
 
             ipv4 = None
             ipv6 = None
@@ -324,7 +373,7 @@ def parse_nmap_xml(nmap_results):
 
                         service_name = None
                         ex_info = None
-                        service_product = None
+                        # service_product = None
                         svc_cpe_product = None
 
                         svc_cpe = str()
@@ -424,7 +473,13 @@ def parse_nmap_xml(nmap_results):
                                               'extra_info': ex_info,
                                               'svc_product': svc_product}
 
+                            port_dict = {'protocol': protocol,
+                                         'portid': portid,
+                                         'svc_cpe_product_name': svc_cpe_product_name,
+                                         'svc_cpe_product_version': svc_cpe_product_version}
+
                             port_dict_list.append(inventory_port)
+                            port_list.append(port_dict)
 
                 inventory_host = {'nmap_discovery_ipv4_addr': ipv4,
                                   'nmap_discovery_ipv6_addr': ipv6,
@@ -441,6 +496,13 @@ def parse_nmap_xml(nmap_results):
                              'nmap_discovery_ports': port_dict_list,
                              'nmap_discovery_perception_product_uuid': system_uuid,
                              'nmap_discovery_timestamp': int(time.time())}
+
+                host_dict_4ov = {'ipv4': ipv4,
+                                 'ipv6': ipv6,
+                                 'mac_vendor': mac_vendor,
+                                 'port_list': port_list}
+
+                host_list.append(host_dict_4ov)
 
                 if ipv4:
                     ip_addr = ipv4
@@ -465,8 +527,8 @@ def parse_nmap_xml(nmap_results):
                                         nmap_json_data)
 
         nmap_db_session.close()
+        return host_list
 
     except Exception as nmap_xml_e:
         syslog.syslog(syslog.LOG_INFO, '####  Failed to parse the Nmap XML output file %s  ####' % str(nmap_results))
         syslog.syslog(syslog.LOG_INFO, str(nmap_xml_e))
-
