@@ -186,5 +186,5 @@ class OpenVasVuln(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     perception_product_uuid = Column(postgresql.UUID, nullable=False)
-    name = Column(Text, unique=True, nullable=False)
+    ip_addr = Column(postgresql.INET, unique=True, nullable=False)
     created_at = Column(TIMESTAMP(timezone=False), default=_get_date)
