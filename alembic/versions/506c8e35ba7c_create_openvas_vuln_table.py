@@ -25,7 +25,7 @@ def upgrade():
     op.create_table('openvas_vulns',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
                     sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
-                    sa.Column('name', sa.Text, unique=True, nullable=False),
+                    sa.Column('ip_addr', postgresql.INET, unique=True, nullable=False),
                     sa.Column('created_at', sa.TIMESTAMP(timezone=False), default=_get_date))
 
 
