@@ -188,11 +188,121 @@ def migrate_rebuild_db():
         syslog.syslog(syslog.LOG_INFO, 'Failed to stop  OpenVas Manager')
 
 
-def create_targets(targets_name, openvas_user_username, openvas_user_password, scan_list):
+def get_info(info_type, filter_term, openvas_user_username, openvas_user_password):
+    get_info_cli = '<get_info' \
+                   ' type=\'%s\'' \
+                   ' filter=\'%s rows=-1\'>' \
+                   '</get_info>' % (info_type, filter_term)
+
+    get_info_response = check_output(['omp',
+                                      '--port=9390',
+                                      '--host=localhost',
+                                      '--username=%s' % openvas_user_username,
+                                      '--password=%s' % openvas_user_password,
+                                      '--xml=%s' % get_info_cli]).decode('utf8', 'ignore')
+
+    error = search(r'status=\"503\"', get_info_response)
+
+    if error:
+        syslog.syslog(syslog.LOG_INFO, str('OpenVas error: %s' % get_info_response))
+        return
+
+    if get_info_response:
+        return get_info_response.encode('ascii', 'ignore')
+
+
+def create_config(config_name, openvas_user_username, openvas_user_password):
+
+    create_config_cli = '<create_config>' \
+                        '<copy>085569ce-73ed-11df-83c3-002264764cea</copy>' \
+                        '<name>%s</name>' \
+                        '</create_config>' % config_name
+
+    create_config_response = check_output(['omp',
+                                           '--port=9390',
+                                           '--host=localhost',
+                                           '--username=%s' % openvas_user_username,
+                                           '--password=%s' % openvas_user_password,
+                                           '--xml=%s' % create_config_cli]).decode()
+
+    error = search(r'status=\"503\"', create_config_response)
+
+    if error:
+        syslog.syslog(syslog.LOG_INFO, str('OpenVas error: %s' % create_config_response))
+        return
+
+    create_config_response_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', create_config_response)
+
+    if create_config_response_id:
+        return create_config_response_id.group(0)
+
+
+def modify_config(config_id, openvas_user_username, openvas_user_password, nvt_family, nvt_oids):
+
+    modify_config_cli = '<modify_config config_id="%s">' \
+                        '<nvt_selection>' \
+                        '<family>%s</family>' \
+                        '%s' \
+                        '</nvt_selection>' \
+                        '</modify_config>' % (config_id, nvt_family, nvt_oids)
+
+    modify_config_response = check_output(['omp',
+                                           '--port=9390',
+                                           '--host=localhost',
+                                           '--username=%s' % openvas_user_username,
+                                           '--password=%s' % openvas_user_password,
+                                           '--xml=%s' % modify_config_cli]).decode()
+
+    error = search(r'status=\"503\"', modify_config_response)
+    success = search(r'status=\"200\"', modify_config_response)
+
+    if error:
+        syslog.syslog(syslog.LOG_INFO, str('OpenVas error: %s' % modify_config_response))
+        return False
+
+    if success:
+        return True
+
+
+def create_port_list(port_list_name, openvas_user_username, openvas_user_password, port_list, protocol):
+
+    if protocol == 'udp':
+        pro = 'U'
+
+    else:
+        pro = 'T'
+
+    create_port_list_cli = '<create_port_list>' \
+                           '<name>%s</name>' \
+                           '<port_range>%s:%s</port_range>' \
+                           '</create_port_list>' % (port_list_name, pro, ','.join(port_list))
+
+    create_port_list_response = check_output(['omp',
+                                              '--port=9390',
+                                              '--host=localhost',
+                                              '--username=%s' % openvas_user_username,
+                                              '--password=%s' % openvas_user_password,
+                                              '--xml=%s' % create_port_list_cli]).decode()
+
+    error = search(r'status=\"503\"', create_port_list_response)
+
+    if error:
+        syslog.syslog(syslog.LOG_INFO, str('OpenVas error: %s' % create_port_list_response))
+        return
+
+    create_port_list_response_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', create_port_list_response)
+
+    if create_port_list_response_id:
+        return create_port_list_response_id.group(0)
+
+
+def create_target(targets_name, openvas_user_username, openvas_user_password, host_ip, port_list_id):
     create_target_cli = '<create_target>' \
                         '<name>%s</name>' \
                         '<hosts>%s</hosts>' \
-                        '</create_target>' % (targets_name, ', '.join(scan_list))
+                        '<port_list id=\'%s\'/>' \
+                        '</create_target>' % (targets_name, host_ip, port_list_id)
+
 
     create_target_response = check_output(['omp',
                                            '--port=9390',
@@ -251,13 +361,13 @@ def create_targets(targets_name, openvas_user_username, openvas_user_password, s
 #    return create_target_response_id
 
 
-def create_task(task_name, target_id, openvas_user_username, openvas_user_password):
+def create_task(task_name, target_id, config_id, openvas_user_username, openvas_user_password):
     create_task_cli = '<create_task>' \
                       '<name>%s</name>' \
                       '<comment></comment>' \
-                      '<config id="daba56c8-73ec-11df-a475-002264764cea"/>' \
-                      '<target id="%s"/>' \
-                      '</create_task>' % (task_name, target_id)
+                      '<config id=\'%s\'/>' \
+                      '<target id=\'%s\'/>' \
+                      '</create_task>' % (task_name, config_id, target_id)
 
     create_task_response = check_output(['omp',
                                          '--port=9390',
@@ -381,6 +491,18 @@ def delete_targets(target_id, openvas_user_username, openvas_user_password):
     return delete_targets_cli_response
 
 
+def delete_port_list(port_list_id, openvas_user_username, openvas_user_password):
+    delete_port_list_cli = '<delete_port_list port_list_id="%s"/>' % port_list_id
+    delete_port_list_cli_response = check_output(['omp',
+                                                  '--port=9390',
+                                                  '--host=localhost',
+                                                  '--username=%s' % openvas_user_username,
+                                                  '--password=%s' % openvas_user_password,
+                                                  '--xml=%s' % delete_port_list_cli]).decode()
+
+    return delete_port_list_cli_response
+
+
 def delete_reports(report_id, openvas_user_username, openvas_user_password):
     delete_report_cli = '<delete_report report_id="%s"/>' % report_id
     delete_report_cli_response = check_output(['omp',
@@ -389,5 +511,15 @@ def delete_reports(report_id, openvas_user_username, openvas_user_password):
                                                '--username=%s' % openvas_user_username,
                                                '--password=%s' % openvas_user_password,
                                                '--xml=%s' % delete_report_cli]).decode()
-
     return delete_report_cli_response
+
+
+def delete_config(config_id,openvas_user_username, openvas_user_password):
+    delete_config_cli = '<delete_config config_id="%s"/>' % config_id
+    delete_config_cli_response = check_output(['omp',
+                                               '--port=9390',
+                                               '--host=localhost',
+                                               '--username=%s' % openvas_user_username,
+                                               '--password=%s' % openvas_user_password,
+                                               '--xml=%s' % delete_config_cli]).decode()
+    return delete_config_cli_response
