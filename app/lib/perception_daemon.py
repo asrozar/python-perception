@@ -20,7 +20,7 @@ from app.lib.infrastructure import InterrogateRSI
 from app.lib.openvas import setup_openvas,\
     update_openvas_db,\
     migrate_rebuild_db
-from active_discovery import RunNmap, RunOpenVas
+from active_discovery import RunNmap, RunOpenVas, discover_live_hosts
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 from re import match
 import threading
@@ -60,7 +60,7 @@ class MessageBroker(object):
 
             for host in host_list:
 
-                RunNmap(nmap_tmp_dir, host, None, None, None, None)
+                RunNmap(host, None, None, None, None)
 
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -70,7 +70,11 @@ class MessageBroker(object):
 
             if openvas_admin:
 
-                RunOpenVas(host_list, openvas_admin.username, openvas_admin.password)
+                live_hosts = discover_live_hosts(host_list)
+
+                for host in live_hosts:
+
+                    RunOpenVas(host, openvas_admin.username, openvas_admin.password)
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -130,21 +134,21 @@ class OpenVasUpdater(object):
                         OpenvasAdmin.perception_product_uuid == system_uuid).order_by(OpenvasAdmin.id.desc()).first()
 
                 except OperationalError as e:  # if it's not working
-                    syslog.syslog(syslog.LOG_INFO, 'Could not Query for OpenVas Admin')
-                    syslog.syslog(syslog.LOG_INFO, e)
+                    syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater error: Could not Query for OpenVas Admin')
+                    syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater error: %s' % str(e))
                     return
 
                 if openvas_admin is None:
-                    syslog.syslog(syslog.LOG_INFO, 'OpenVas needs to be configured, this will take some time.')
-                    setup_openvas()  # configured it
+                    syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater info: OpenVas needs to be configured')
+                    setup_openvas()
 
-                # update openvas NVT's, CERT data, and CPE's
+                # update openvas NVT's, CERT data, and CPE's once a day
                 one_day_ago = datetime.now() - timedelta(hours=24)
                 check_last_update = db_session.query(OpenvasLastUpdate).filter(
                     OpenvasLastUpdate.perception_product_uuid == system_uuid).order_by(OpenvasLastUpdate.id.desc()).first()
 
                 if check_last_update is None or check_last_update.updated_at <= one_day_ago:
-                    syslog.syslog(syslog.LOG_INFO, 'Updating OpenVas NVT, SCAP and CERT database')
+                    syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater info: Updating OpenVas NVT, SCAP and CERT database')
 
                     try:
                         update_openvas_db()
@@ -155,15 +159,14 @@ class OpenVasUpdater(object):
                         add_update_info = OpenvasLastUpdate(updated_at=datetime.now(), perception_product_uuid=system_uuid)
                         db_session.add(add_update_info)
                         db_session.commit()
-                        syslog.syslog(syslog.LOG_INFO,
-                                      'OpenVas NVT, SCAP and CERT database updated successfully [DB update is now complete]')
+                        syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater info: Update is now complete')
 
                     except Exception as e:
                         db_session.rollback()
-                        syslog.syslog(syslog.LOG_INFO, 'OpenVas update error: %s' % str(e))
+                        syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater error: %s' % str(e))
 
             except Exception as openvas_updater_e:
-                syslog.syslog(syslog.LOG_INFO, str(openvas_updater_e))
+                syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater error: %s' % str(openvas_updater_e))
 
             sleep(self.interval)
 
