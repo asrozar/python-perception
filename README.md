@@ -81,7 +81,7 @@ There are two parts to this application.
     
     `hostname(config)# seeds`
     
-    `hostname(config/seeds)# add 10.1.1.1 info_svc_account`.
+    `hostname(config/seeds)# add 10.1.1.1 info_svc_account`
     
     The interrogation of the network devices yields information about locally connected hosts, subnets
     arp-cache tables and discovery protocol information. If discovery mode is configured as "active" [default=passive], during 
@@ -98,3 +98,13 @@ There are two parts to this application.
     `show infrastructure` Displays the discovered network devices.
     
     `show seeds` Displays the current devices.
+    
+    Run commands:
+    
+    `hostname> run discovery on 172.16.1.10`
+    
+    `hostname> run discovery on 172.16.1.0/24`
+    
+    `hostname> run vuln_scan on 172.16.1.10`
+    
+    `hostname> run vuln_scan on 172.16.1.0/24`
