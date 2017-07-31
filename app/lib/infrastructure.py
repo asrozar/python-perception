@@ -907,8 +907,7 @@ class InterrogateRSI(object):
                 except CalledProcessError:
                     mac_vendor = None
 
-                RunNmap(nmap_tmp_dir,
-                        h['local_host_ip_addr'],
+                RunNmap(h['local_host_ip_addr'],
                         h['local_host_mac_addr'],
                         mac_vendor,
                         '%s (%s)' % (rsi.ip_addr, rsi.host_name),
