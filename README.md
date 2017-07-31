@@ -2,7 +2,7 @@ Perception
 ==========
 
 Perception is a tool used to gain better network visibility by pulling LAN information from IOS
-network devices. Inventory information is indexed using Splunk.
+network devices. Inventory information is indexed using Elasticsearch.
 
 
 First thing to do is edit the app/config/configuration.yml file. Either store it in `/etc/perception/configuration.yml`
@@ -24,14 +24,24 @@ Example Configuration
     # Setup PKI and stop being lazy!
     # Svc Account password
     # svc_account_passwd: insecure_password
+    # -------------------------
+    
+    # MessageQueuing
+    # -------------------------
+    mq_host = 'mq_host'
+    mq_port = 5671
+    mq_ssl = True
+    mq_user = 'mq_user'
+    mq_password = 'mq_password'
 
-    # Splunk Indexer Info
-    splunk_indexer: True
-    splunk_host: host
-    splunk_username: username
-    splunk_password: super_secure_password
-    splunk_api_port: 8089
-    splunk_index: perception_index
+    # --------------------------
+    # Elasticsearch Indexer Info
+    # --------------------------
+    es_host = '127.0.0.1'
+    es_port = 9200
+    es_ssl = False
+    es_index = 'perception'
+    es_direct = True
 
 PostgreSQL 8.4 and ^ is supported.
 
