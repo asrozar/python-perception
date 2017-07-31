@@ -19,9 +19,6 @@ from app import db_session
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-__version__ = '0.2'
-__author__ = 'Avery Rozar: avery.rozar@insecure-it.com'
-
 from app.lib.perception_daemon import PerceptionDaemon
 from time import sleep
 import sys

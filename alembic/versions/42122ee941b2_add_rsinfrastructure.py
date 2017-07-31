@@ -25,14 +25,10 @@ def _get_date():
 def upgrade():
     op.create_table('rsinfrastructure',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
+                    sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('ip_addr', postgresql.INET, unique=True, nullable=False),
                     sa.Column('host_name', sa.Text),
                     sa.Column('svc_user_id', sa.Integer, sa.ForeignKey('svc_users.id')),
-                    sa.Column('os_version', sa.Text),
-                    sa.Column('license_level', sa.Text),
-                    sa.Column('system_serial_number', sa.Text, unique=True),
-                    sa.Column('model_number', sa.Text),
-                    sa.Column('last_investigation', sa.TIMESTAMP(timezone=False)),
                     sa.Column('created_at', sa.TIMESTAMP(timezone=False), default=_get_date),
                     sa.Column('updated_at', sa.TIMESTAMP(timezone=False), onupdate=_get_date))
 

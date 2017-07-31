@@ -25,19 +25,11 @@ def _get_date():
 def upgrade():
     op.create_table('discovery_protocol_findings',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
+                    sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('rsinfrastructure_id', sa.Integer, sa.ForeignKey('rsinfrastructure.id'), nullable=False),
-                    sa.Column('remote_device_id', sa.Text, nullable=False),
                     sa.Column('ip_addr', postgresql.INET),
                     sa.Column('platform', sa.Text),
                     sa.Column('capabilities', sa.Text),
-                    sa.Column('interface', sa.Text),
-                    sa.Column('port_id', sa.Text),
-                    sa.Column('discovery_version', sa.Integer),
-                    sa.Column('protocol_hello', sa.Text),
-                    sa.Column('vtp_domain', sa.Text),
-                    sa.Column('native_vlan', sa.Integer),
-                    sa.Column('duplex', sa.Text),
-                    sa.Column('power_draw', sa.Text),
                     sa.Column('created_at', sa.TIMESTAMP(timezone=False), default=_get_date))
 
 

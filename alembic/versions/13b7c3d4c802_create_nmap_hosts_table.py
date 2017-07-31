@@ -1,8 +1,8 @@
-"""create do_not_seeds table
+"""create nmap_hosts table
 
-Revision ID: 3132f6875d83
-Revises: 65df8acfcffc
-Create Date: 2017-05-18 11:00:29.781865
+Revision ID: 13b7c3d4c802
+Revises: ecd5f49567a6
+Create Date: 2017-07-21 08:19:17.849112
 
 """
 from sqlalchemy.dialects import postgresql
@@ -14,16 +14,15 @@ import datetime
 def _get_date():
     return datetime.datetime.now()
 
-
 # revision identifiers, used by Alembic.
-revision = '3132f6875d83'
-down_revision = '65df8acfcffc'
+revision = '13b7c3d4c802'
+down_revision = 'ecd5f49567a6'
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
-    op.create_table('do_not_seeds',
+    op.create_table('nmap_hosts',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
                     sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('ip_addr', postgresql.INET, unique=True, nullable=False),
@@ -31,4 +30,4 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table('do_not_seeds')
+    op.drop_table('nmap_hosts')

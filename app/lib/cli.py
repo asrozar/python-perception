@@ -1,5 +1,5 @@
 import readline
-from app import db_session, nmap_tmp_dir, home_dir, splunk_sock
+from app import db_session, check_if_valid_address, system_uuid
 from subprocess import call, Popen, PIPE
 from app.database.models import OpenvasAdmin,\
     OpenvasLastUpdate,\
@@ -7,8 +7,8 @@ from app.database.models import OpenvasAdmin,\
     SeedRouter,\
     RSInfrastructure, \
     DiscoveryProtocolFinding
+from send_message import SendToRabbitMQ
 from sqlalchemy.exc import IntegrityError
-from re import match
 from socket import gethostbyaddr, herror
 
 # -------------------------------------------------------------------------------
@@ -45,74 +45,11 @@ class TabCompletion(object):
 # -------------------------------------------------------------------------------
 
 
-#def get_hosts_to_scan():
-
-#    hosts = db_session.query(LocalHost).all()
-#    if hosts:
-#        hosts_to_scan = []
-
-#        for host in hosts:
-#            hosts_to_scan.append(host.ip_addr)
-
-#        return hosts_to_scan
-
-
 def split_commands(command):
     cmd_list = list()
     cmd_list += command.split(' ')
 
     return cmd_list
-
-
-def check_if_valid_address(ipaddr):
-
-    # is a valid ipv4 address?
-    if match(r'^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.)'
-             r'{3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$', ipaddr):
-        return True
-
-    # is a valid ipv6 address?
-    elif match(r'^s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:)'
-               r'{6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:)'
-               r')|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]d|1dd|[1-9]?d)'
-               r'(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4})'
-               r'{1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]'
-               r'?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}'
-               r':((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:)'
-               r'{2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)'
-               r'(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|'
-               r'((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|'
-               r':))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)'
-               r'(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:)))(%.+)?s*', ipaddr):
-        return True
-
-    return False
-
-
-def check_if_valid_cider(cider):
-
-    # is a valid ipv4 cider?
-    if match(r'^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.)'
-             r'{3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$', cider):
-        return True
-
-    # is a valid ipv6 cider?
-    if match(r'^s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|'
-             r'((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3})|:))|(([0-9A-Fa-f]{1,4}:)'
-             r'{5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]'
-             r'?d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?#'
-             r'((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:)'
-             r'{3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)'
-             r'(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|'
-             r'((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|'
-             r':))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|'
-             r'2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|'
-             r'((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]d|1dd|[1-9]?d)(.(25[0-5]|2[0-4]d|1dd|[1-9]?d)){3}))|'
-             r':)))(%.+)?s*(\/(d|dd|1[0-1]d|12[0-8]))$', cider):
-        return True
-
-    return False
-
 
 # -------------------------------------------------------------------------------
 # Display Definitions
@@ -152,6 +89,7 @@ def display_help(mode):
         print('')
         print('config               Enter configuration mode.')
         print('show                 Display data.')
+        print('run                  Discovery or Vulnerability scan.')
         print_underscore()
 
     if mode == '(config)#':
@@ -218,65 +156,6 @@ def show_openvas():
             print_underscore()
 
 
-def show_infrastructure():
-
-    rsi = db_session.query(RSInfrastructure).all()
-
-    if rsi:
-        show_display('Route Switch Infrastructure')
-        for rs in rsi:
-            try:
-                print('')
-                print('IP Address:                           %s' % rs.ip_addr)
-                try:
-                    print('Host Name:                            %s' % rs.host_name)
-                except AttributeError:
-                    print('Host Name:                            %s' % None)
-
-                print('Service User ID:                      %s' % rs.svc_users.username)
-                print('Operating System:                     %s' % rs.os_version)
-                print('License Level:                        %s' % rs.license_level)
-                print('System Serial Number:                 %s' % rs.system_serial_number)
-                print('System Model:                         %s' % rs.model_number)
-                print_underscore()
-
-            except Exception as rsi_e:
-                print(rsi_e)
-
-
-def show_discovery_protocol():
-
-    cdp = db_session.query(DiscoveryProtocolFinding).all()
-
-    if cdp:
-        show_display('Discovery Protocol data')
-
-        try:
-            for c in cdp:
-                print('')
-                if c.rsinfrastructure.host_name:
-                    print('Source Switch                        %s (%s)' % (c.rsinfrastructure.ip_addr,
-                                                                            c.rsinfrastructure.host_name))
-                else:
-                    print('Source Switch                        %s' % c.rsinfrastructure.ip_addr)
-
-                print('Remote Device                        %s' % c.remote_device_id)
-                print('Remote IP Address                    %s' % c.ip_addr)
-                print('Platform                             %s' % c.platform)
-                print('Capabilities                         %s' % c.capabilities)
-                print('Interface                            %s' % c.interface)
-                print('Port ID                              %s' % c.port_id)
-                print('Discovery Version                    %s' % c.discovery_version)
-                print('Protocol Hello                       %s' % c.protocol_hello)
-                print('VTP Domain                           %s' % c.vtp_domain)
-                print('Native VLAN                          %s' % c.native_vlan)
-                print('Duplex                               %s' % c.duplex)
-                print('Power Draw                           %s' % c.power_draw)
-                print_underscore()
-
-        except Exception as show_cdp_e:
-            print(show_cdp_e)
-
 # -------------------------------------------------------------------------------
 # Definitions to add data to the database
 # -------------------------------------------------------------------------------
@@ -303,14 +182,16 @@ def add_seeds(seed_info):
             hostname = None
 
         add_svc_user = SvcUser(username=username,
-                               description='Seed Router Service Account')
+                               description='Seed Router Service Account',
+                               perception_product_uuid=system_uuid)
 
         try:
             db_session.add(add_svc_user)
             db_session.flush()
             add_router = SeedRouter(ip_addr=ipaddr,
                                     svc_user_id=add_svc_user.id,
-                                    host_name=hostname)
+                                    host_name=hostname,
+                                    perception_product_uuid=system_uuid)
             db_session.add(add_router)
             db_session.commit()
 
@@ -319,7 +200,8 @@ def add_seeds(seed_info):
             user = db_session.query(SvcUser).filter_by(username=username).first()
             add_router = SeedRouter(ip_addr=ipaddr,
                                     svc_user_id=user.id,
-                                    host_name=hostname)
+                                    host_name=hostname,
+                                    perception_product_uuid=system_uuid)
             db_session.add(add_router)
             db_session.commit()
 
@@ -382,12 +264,13 @@ def cli_loop(prefix, mode, v):
             if mode == '>':
                 readline.set_completer(TabCompletion(['config',
                                                       'show',
-                                                      'infrastructure',
+                                                      'run',
                                                       'firewalls',
                                                       'seeds',
                                                       'openvas',
                                                       'nmap',
                                                       'discovery',
+                                                      'vuln_scan',
                                                       'all'
                                                       ]).complete)
             elif mode == '(config)#':
@@ -466,34 +349,35 @@ def cli_loop(prefix, mode, v):
                     # ------------------------------------------------------------------
                     # run commands
                     # ------------------------------------------------------------------
-                    # if cmd[0] == 'run':
-                    #    try:
-                    #        if cmd[1] == 'discovery':
-                    #            try:
-                    #                if cmd[2] == 'on':
-                    #                    ch_1 = check_if_valid_address(cmd[3])
-                    #
-                    #                    if ch_1:
-                    #                        # run_now = RunDiscovery(run=True, onhost=cmd[3])
-                    #
-                    #                        continue
-                    #                    continue
-                    #
-                    #            except IndexError:
-                    #                pass
-                    #
-                    #        hosts_to_scan = get_hosts_to_scan()
-                    #
-                    #       if hosts_to_scan:
-                    #
-                    #            # run_now = RunDiscovery(run=True)
-                    #            continue
-                    #
-                    #        else:
-                    #            print('You need to add local_hosts or a seed router')
-                    #    except IndexError:
-                    #        pass
-                    #
+                    if cmd[0] == 'run':
+                        try:
+                            if cmd[1] == 'discovery':
+                                try:
+                                    if cmd[2] == 'on':
+
+                                        SendToRabbitMQ('run_nmap_on %s' % cmd[3:],
+                                                       system_uuid,
+                                                       system_uuid)
+                                        continue
+
+                                except IndexError:
+                                    pass
+
+                            if cmd[1] == 'vuln_scan':
+                                try:
+                                    if cmd[2] == 'on':
+
+                                        SendToRabbitMQ('run_openvas_on %s' % cmd[3:],
+                                                       system_uuid,
+                                                       system_uuid)
+                                        continue
+
+                                except IndexError:
+                                    pass
+
+                        except IndexError:
+                            pass
+
                     # ------------------------------------------------------------------
                     # show commands
                     # ------------------------------------------------------------------
@@ -508,13 +392,8 @@ def cli_loop(prefix, mode, v):
                         elif cmd[1] == 'openvas':
                             show_openvas()
 
-                        elif cmd[1] == 'infrastructure':
-                            show_infrastructure()
-
                         elif cmd[1] == 'all':
                             show_seeds()
-                            show_infrastructure()
-                            show_discovery_protocol()
                             show_openvas()
                             # show_nmap()
 

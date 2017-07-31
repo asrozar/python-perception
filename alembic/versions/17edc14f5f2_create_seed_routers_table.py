@@ -25,6 +25,7 @@ def _get_date():
 def upgrade():
     op.create_table('seed_routers',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
+                    sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('ip_addr', postgresql.INET, unique=True, nullable=False),
                     sa.Column('host_name', sa.Text),
                     sa.Column('svc_user_id', sa.Integer, sa.ForeignKey('svc_users.id', ondelete='cascade')),

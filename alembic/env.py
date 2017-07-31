@@ -27,10 +27,10 @@ target_metadata = None
 # ... config.
 
 # database yaml file for connectivity info
-db_yml = getenv('PERCEPTION_CONFIG')
+db_yml = getenv('PERCEPTION_DB_INFO')
 
 if db_yml is None:
-    db_yml = '/etc/perception/configuration.yml'
+    db_yml = 'app/config/database.yml'
 
 new_list = []
 reg_clean = re.compile(r'[:]')

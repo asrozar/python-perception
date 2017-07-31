@@ -25,6 +25,7 @@ depends_on = None
 def upgrade():
     op.create_table('hosts_with_bad_ssh_key',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
+                    sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('ip_addr', postgresql.INET, unique=True, nullable=False),
                     sa.Column('created_at', sa.TIMESTAMP(timezone=False), default=_get_date))
 

@@ -1,5 +1,6 @@
 import datetime
 from sqlalchemy.exc import IntegrityError
+from app import es_add_document
 from app import IOS_SHOW_ARP,\
     IOS_TERMLEN0,\
     IOS_SHOW_ADJACENCY,\
@@ -25,9 +26,9 @@ from app import IOS_SHOW_ARP,\
     SSH_OUTDATED_PROTOCOL, \
     config, \
     nmap_tmp_dir, \
-    hostname_lookup, \
-    splunk_sock,\
-    Session
+    Session, \
+    system_uuid, \
+    hostname_lookup
 from app.lib.active_discovery import RunNmap
 from app.database.models import RSInfrastructure,\
     RSAddr,\
@@ -41,6 +42,8 @@ from pexpect import spawnu, exceptions, TIMEOUT
 from re import search, sub
 import syslog
 import threading
+import time
+import json
 
 
 def get_ssh_session(host, username):
@@ -101,7 +104,7 @@ def get_ssh_session(host, username):
             elif s == 4:
                 return 97, ''
             elif s == 5:
-                child.sendline(config['svc_account_passwd'])
+                child.sendline(config.svc_account_passwd)
                 s = child.expect([TIMEOUT,
                                   unicode(SSH_REFUSED),
                                   unicode(PASSWORD),
@@ -127,7 +130,7 @@ def get_ssh_session(host, username):
                 return s, HASH_PROMPT
 
         elif s == 3:
-            child.sendline(config['svc_account_passwd'])
+            child.sendline(config.svc_account_passwd)
             s = child.expect([TIMEOUT,
                               unicode(SSH_REFUSED),
                               unicode(PASSWORD),
@@ -209,7 +212,7 @@ def get_ssh_session(host, username):
                 elif s == 4:
                     return 97, ''
                 elif s == 5:
-                    child.sendline(config['svc_account_passwd'])
+                    child.sendline(config.svc_account_passwd)
                     s = child.expect([TIMEOUT,
                                       unicode(SSH_REFUSED),
                                       unicode(PASSWORD),
@@ -235,7 +238,7 @@ def get_ssh_session(host, username):
                     return s, HASH_PROMPT
 
             elif s == 3:
-                child.sendline(config['svc_account_passwd'])
+                child.sendline(config.svc_account_passwd)
                 s = child.expect([TIMEOUT,
                                   unicode(SSH_REFUSED),
                                   unicode(PASSWORD),
@@ -268,7 +271,7 @@ def get_ssh_session(host, username):
         elif s == 5:
             return 97, ''
         elif s == 6:
-            child.sendline(config['svc_account_passwd'])
+            child.sendline(config.svc_account_passwd)
             s = child.expect([TIMEOUT,
                               unicode(SSH_REFUSED),
                               unicode(PASSWORD),
@@ -299,7 +302,7 @@ def get_ssh_session(host, username):
 
     elif s == 6:
         # using password not PKI
-        child.sendline(config['svc_account_passwd'])
+        child.sendline(config.svc_account_passwd)
         s = child.expect([TIMEOUT,
                           unicode(SSH_REFUSED),
                           unicode(PASSWORD),
@@ -343,13 +346,14 @@ class InterrogateRSI(object):
         self.svc_user_id = svc_user_id
         self.seed = seed
 
-        t = threading.Thread(target=self.run, args=(host_name, ip_addr, username, svc_user_id, seed))
-        t.start()
-        #self.run(host_name,
-        #         ip_addr,
-        #         username,
-        #         svc_user_id,
-        #         seed)
+        #t = threading.Thread(target=self.run, args=(host_name, ip_addr, username, svc_user_id, seed))
+        #t.start()
+
+        self.run(host_name,
+                 ip_addr,
+                 username,
+                 svc_user_id,
+                 seed)
 
     @staticmethod
     def interrogate(username, host):
@@ -509,10 +513,12 @@ class InterrogateRSI(object):
                             model_number = ws_model_num_match.group(0)
                             break
 
-                rsinfrastructure = {'os_version': os_version,
-                                    'license_level': license_level,
-                                    'system_serial_number': system_serial_number,
-                                    'model_number': model_number}
+                rsinfrastructure = {'rsi_os_version': os_version,
+                                    'rsi_license_level': license_level,
+                                    'rsi_system_serial_number': system_serial_number,
+                                    'rsi_model_number': model_number,
+                                    'rsi_perception_product_uuid': system_uuid,
+                                    'rsi_timestamp': int(time.time())}
 
                 for sec_addr_line in sec_addr_lines:
                     rsaddr = search(r'\b(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'
@@ -520,8 +526,7 @@ class InterrogateRSI(object):
                                     r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'
                                     r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b', sec_addr_line)
                     if rsaddr:
-                        d = {'host': host,
-                             'rsaddr': str(rsaddr.group(0))}
+                        d = {'rsaddr': str(rsaddr.group(0))}
 
                         secondary_addrs_dict_list.append(d)
 
@@ -564,9 +569,10 @@ class InterrogateRSI(object):
 
                         for addr in adjacency_addrs_list:
                             if ip_addrs.group(0) in addr:
-                                host_dict = {'ip_addr': ip_addrs.group(0),
-                                             'mac_addr': mac_addrs.group(0),
-                                             'adjacency_int': addr[ip_addrs.group(0)]}
+                                host_dict = {'local_host_ip_addr': ip_addrs.group(0),
+                                             'local_host_mac_addr': mac_addrs.group(0),
+                                             'local_host_adjacency_int': addr[ip_addrs.group(0)]}
+
                                 local_host_dict_list.append(host_dict)
 
                 for cam_line in cam_lines:
@@ -581,11 +587,11 @@ class InterrogateRSI(object):
                         else:
                             vlan_id = mac_addrs_line_split[0]
 
-                        mac_addr_dict = {'host': host,
-                                         'mac_addr': mac_addrs_line_split[1],
-                                         'type': mac_addrs_line_split[2],
-                                         'port': mac_addrs_line_split[3].strip('\r\n'),
-                                         'vlan': int(vlan_id)}
+                        mac_addr_dict = {'mac_table_mac_addr': mac_addrs_line_split[1],
+                                         'mac_table_type': mac_addrs_line_split[2],
+                                         'mac_table_port': mac_addrs_line_split[3].strip('\r\n'),
+                                         'mac_table_vlan': int(vlan_id)}
+
                         mac_dict_list.append(mac_addr_dict)
 
                 for element in data_list:
@@ -758,18 +764,17 @@ class InterrogateRSI(object):
 
             try:
                 rsi_db_session.query(SeedRouter).filter(SeedRouter.ip_addr == ip_addr).delete()
-                do_not_seed = HostUsingSshv1(ip_addr=ip_addr)
+                do_not_seed = HostUsingSshv1(ip_addr=ip_addr, perception_product_uuid=system_uuid)
                 rsi_db_session.add(do_not_seed)
-
                 rsi_db_session.commit()
-
-                if config['splunk_indexer']:
-                    splunk_sock('VULNERABILITY: %s is currently using SSHv1' % ip_addr)
+                syslog.syslog(syslog.LOG_INFO, 'VULNERABILITY: %s is currently using SSHv1' % ip_addr)
 
                 return
+
             except Exception as e:
                 syslog.syslog(syslog.LOG_INFO, str(e))
                 rsi_db_session.rollback()
+
                 return
 
         elif interrogation == 98:
@@ -777,16 +782,17 @@ class InterrogateRSI(object):
 
             try:
                 rsi_db_session.query(SeedRouter).filter(SeedRouter.ip_addr == ip_addr).delete()
-                do_not_seed = HostWithBadSshKey(ip_addr=ip_addr)
+                do_not_seed = HostWithBadSshKey(ip_addr=ip_addr, perception_product_uuid=system_uuid)
                 rsi_db_session.add(do_not_seed)
                 rsi_db_session.commit()
+                syslog.syslog(syslog.LOG_INFO, 'DANGER: SSH key for %s has changed' % ip_addr)
 
-                if config['splunk_indexer']:
-                    splunk_sock('DANGER: SSH key for %s has changed' % ip_addr)
                 return
+
             except Exception as e:
                 syslog.syslog(syslog.LOG_INFO, str(e))
                 rsi_db_session.rollback()
+
                 return
 
         elif interrogation == 99:
@@ -794,16 +800,17 @@ class InterrogateRSI(object):
 
             try:
                 rsi_db_session.query(SeedRouter).filter(SeedRouter.ip_addr == ip_addr).delete()
-                do_not_seed = DoNotSeed(ip_addr=ip_addr)
+                do_not_seed = DoNotSeed(ip_addr=ip_addr, perception_product_uuid=system_uuid)
                 rsi_db_session.add(do_not_seed)
                 rsi_db_session.commit()
+                syslog.syslog(syslog.LOG_INFO, 'INFO: Perception can not access %s' % ip_addr)
 
-                if config['splunk_indexer']:
-                    splunk_sock('INFO: Perception can not access %s' % ip_addr)
                 return
+
             except Exception as e:
                 syslog.syslog(syslog.LOG_INFO, str(e))
                 rsi_db_session.rollback()
+
                 return
 
         try:
@@ -814,6 +821,7 @@ class InterrogateRSI(object):
                           'Infrastructure Exception caught trying to remove %s from SeedRouter' % str(ip_addr))
             syslog.syslog(syslog.LOG_INFO, str(e))
             rsi_db_session.rollback()
+
             return
 
         rsinfrastructure_dict = interrogation[0]
@@ -823,44 +831,26 @@ class InterrogateRSI(object):
         mac_dict_list = interrogation[4]
         discovery_dict_list = interrogation[5]
 
-        rsi = RSInfrastructure(ip_addr=ip_addr,
+        rsi = RSInfrastructure(perception_product_uuid=system_uuid,
+                               ip_addr=ip_addr,
                                host_name=host_name,
-                               svc_user_id=svc_user_id,
-                               os_version=rsinfrastructure_dict['os_version'],
-                               license_level=rsinfrastructure_dict['license_level'],
-                               system_serial_number=rsinfrastructure_dict['system_serial_number'],
-                               model_number=rsinfrastructure_dict['model_number'],
-                               last_investigation=datetime.datetime.now())
+                               svc_user_id=svc_user_id)
 
-        rsi_d = {'ip_addr': ip_addr,
-                 'host_name': str(host_name),
-                 'svc_user_id': str(username),
-                 'os_version': str(rsinfrastructure_dict['os_version']),
-                 'license_level': str(rsinfrastructure_dict['license_level']),
-                 'system_serial_number': str(rsinfrastructure_dict['system_serial_number']),
-                 'model_number': str(rsinfrastructure_dict['model_number'])}
         try:
+
+            # TODO: fix this with a single module like get_or_create()
             rsi_db_session.add(rsi)
             rsi_db_session.commit()
-
-            if config['splunk_indexer']:
-                splunk_sock('RSInfrastructure=%s' % rsi_d)
 
         except IntegrityError:
             rsi_db_session.rollback()
             rsi_db_session.query(RSInfrastructure).filter(RSInfrastructure.ip_addr == ip_addr).\
-                update({'ip_addr': ip_addr,
+                update({'perception_product_uuid': system_uuid,
+                        'ip_addr': ip_addr,
                         'host_name': host_name,
-                        'svc_user_id': svc_user_id,
-                        'os_version': rsinfrastructure_dict['os_version'],
-                        'license_level': rsinfrastructure_dict['license_level'],
-                        'system_serial_number': rsinfrastructure_dict['system_serial_number'],
-                        'model_number': rsinfrastructure_dict['model_number']})
+                        'svc_user_id': svc_user_id})
             rsi_db_session.commit()
             rsi = rsi_db_session.query(RSInfrastructure).filter(RSInfrastructure.ip_addr == ip_addr).first()
-
-            if config['splunk_indexer']:
-                splunk_sock('RSInfrastructure=%s' % rsi_d)
 
         if seed is False:
             # delete rsaddrs per rsi_id
@@ -869,52 +859,18 @@ class InterrogateRSI(object):
             rsi_db_session.commit()
 
         for a in secondary_addrs_dicst_list:
-            add_rsaddr = RSAddr(rsinfrastructure_id=rsi.id,
+            add_rsaddr = RSAddr(perception_product_uuid=system_uuid,
+                                rsinfrastructure_id=rsi.id,
                                 ip_addr=a['rsaddr'])
-
-            rsaddr_d = {'rsinfrastructure_id': rsi.ip_addr,
-                        'ip_addr': a['rsaddr']}
-
             rsi_db_session.add(add_rsaddr)
             rsi_db_session.commit()
 
-            if config['splunk_indexer']:
-                splunk_sock('RSAddr=%s' % rsaddr_d)
-
-        if seed is False:
-            # delete discovery_dict_list per rsi_id
-            rsi_db_session.query(DiscoveryProtocolFinding) \
-                .filter(DiscoveryProtocolFinding.rsinfrastructure_id == rsi.id).delete()
-            rsi_db_session.commit()
-
         for c in discovery_dict_list:
-            cdp_data = DiscoveryProtocolFinding(rsinfrastructure_id=rsi.id,
-                                                remote_device_id=c['Device ID'],
+            cdp_data = DiscoveryProtocolFinding(perception_product_uuid=system_uuid,
+                                                rsinfrastructure_id=rsi.id,
                                                 ip_addr=c['IP'],
                                                 platform=c['Platform'],
-                                                capabilities=c['Capabilities'],
-                                                interface=c['Interface'],
-                                                port_id=c['Port ID (outgoing port)'],
-                                                discovery_version=c['advertisement version'],
-                                                protocol_hello=c['Protocol Hello'],
-                                                vtp_domain=c['VTP Management Domain'],
-                                                native_vlan=c['Native VLAN'],
-                                                duplex=c['Duplex'],
-                                                power_draw=c['Power drawn'])
-
-            cdp_data_d = {'rsinfrastructure_id': rsi.ip_addr,
-                          'remote_device_id': c['Device ID'],
-                          'ip_addr': c['IP'],
-                          'platform': c['Platform'],
-                          'capabilities': c['Capabilities'],
-                          'interface': c['Interface'],
-                          'port_id': c['Port ID (outgoing port)'],
-                          'discovery_version': c['advertisement version'],
-                          'protocol_hello': c['Protocol Hello'],
-                          'vtp_domain': c['VTP Management Domain'],
-                          'native_vlan': c['Native VLAN'],
-                          'duplex': c['Duplex'],
-                          'power_draw': c['Power drawn']}
+                                                capabilities=c['Capabilities'])
 
             try:
                 rsi_db_session.add(cdp_data)
@@ -922,75 +878,40 @@ class InterrogateRSI(object):
             except Exception as e:
                 syslog.syslog(syslog.LOG_INFO, str(e))
 
-            if config['splunk_indexer']:
-                splunk_sock('DiscoveryProtocolFinding=%s' % cdp_data_d)
+        rsinfrastructure_dict['rsi_secondary_addrs'] = secondary_addrs_dicst_list
+        rsinfrastructure_dict['rsi_local_hosts'] = local_host_dict_list
+        rsinfrastructure_dict['rsi_local_subnets'] = local_subnets_dict_list
+        rsinfrastructure_dict['rsi_mac_table'] = mac_dict_list
+        rsinfrastructure_dict['rsi_discovery_protocol'] = discovery_dict_list
 
-        # -------------------------------------------------------------------------------
-        # The remaining data is indexed only
-        # -------------------------------------------------------------------------------
+        rsi_json_data = json.dumps(rsinfrastructure_dict)
 
-        for m in mac_dict_list:
+        if config.es_direct:
+            es_add_document(config.es_host,
+                            config.es_port,
+                            config.es_index,
+                            'rsi',
+                            str(rsi.id),
+                            rsi_json_data)
 
-            mac_addr_table_d = {'rsinfrastructure_id': rsi.ip_addr,
-                                'mac_addr': str(m['mac_addr']),
-                                'type': str(m['type']),
-                                'port': str(m['port']),
-                                'vlan': m['vlan']}
+        if config.discovery_mode == 'active':
+            for h in local_host_dict_list:
 
-            if config['splunk_indexer']:
-                splunk_sock('MacAddrTable=%s' % mac_addr_table_d)
+                mac_lookup_string = h['local_host_mac_addr'].replace('.', '')
+                try:
+                    mac_vendor_lookup = check_output(['grep',
+                                                      mac_lookup_string[:6].upper(),
+                                                      '/usr/share/nmap/nmap-mac-prefixes'])
+                    mac_vendor = ' '.join(mac_vendor_lookup.strip().split(' ')[1:])
 
-        for h in local_host_dict_list:
+                except CalledProcessError:
+                    mac_vendor = None
 
-            local_host_d = {'ip_addr': str(h['ip_addr']),
-                            'rsinfrastructure_id': rsi.ip_addr,
-                            'mac_addr': str(h['mac_addr']),
-                            'adjacency_int': str(h['adjacency_int'])}
-
-            if config['splunk_indexer']:
-                splunk_sock('LocalHost=%s' % local_host_d)
-
-            mac_lookup_string = h['mac_addr'].replace('.', '')
-
-            try:
-                mac_vendor_lookup = check_output(['grep',
-                                                  mac_lookup_string[:6].upper(),
-                                                  '/usr/share/nmap/nmap-mac-prefixes'])
-            except CalledProcessError:
-                mac_vendor_lookup = 'Unknown MAC Vendor'
-
-            mac_vendor = ' '.join(mac_vendor_lookup.strip().split(' ')[1:])
-
-            if config['discovery_mode'] == 'active':
-                RunNmap(nmap_tmp_dir,
-                        h['ip_addr'],
-                        h['mac_addr'],
+                RunNmap(h['local_host_ip_addr'],
+                        h['local_host_mac_addr'],
                         mac_vendor,
                         '%s (%s)' % (rsi.ip_addr, rsi.host_name),
-                        h['adjacency_int'])
-
-            elif config['discovery_mode'] == 'passive':
-
-                local_host_host_name = hostname_lookup(h['ip_addr'])
-
-                inventory_host = {'ip_addr': str(h['ip_addr']),
-                                  'macaddr': str(h['mac_addr']),
-                                  'mac_vendor_id': mac_vendor,
-                                  'host_name': local_host_host_name,
-                                  'adjacency_switch': str('%s (%s)' % (rsi.ip_addr, rsi.host_name)),
-                                  'adjacency_int': h['adjacency_int']}
-
-                if config['splunk_indexer']:
-                    splunk_sock('InventoryHost=%s' % inventory_host)
-
-        for l in local_subnets_dict_list:
-
-            local_subnet = {'rsinfrastructure_id': rsi.ip_addr,
-                            'subnet': str(l['subnet']),
-                            'source_int': str(l['source_int'])}
-
-            if config['splunk_indexer']:
-                splunk_sock('LocalSubnet=%s' % local_subnet)
+                        h['local_host_adjacency_int'])
 
         rsi_db_session.close()
         return
