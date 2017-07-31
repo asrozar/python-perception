@@ -148,9 +148,6 @@ class OpenVasUpdater(object):
                 check_last_update = db_session.query(OpenvasLastUpdate).filter(
                     OpenvasLastUpdate.perception_product_uuid == system_uuid).order_by(OpenvasLastUpdate.id.desc()).first()
 
-                syslog.syslog(syslog.LOG_INFO, str(check_last_update.updated_at))
-                syslog.syslog(syslog.LOG_INFO, str(one_day_ago))
-
                 if check_last_update is None or check_last_update.updated_at <= one_day_ago:
                     syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater info: Updating OpenVas NVT, SCAP and CERT database')
 
