@@ -2,6 +2,12 @@
 # Configuration File
 # ------------------
 
+# --------------
+# Time Zone Info
+# --------------
+
+timezone = 'US/Eastern'
+
 # -------------
 # Database Info
 # -------------

@@ -144,7 +144,7 @@ class OpenVasUpdater(object):
                     setup_openvas()
 
                 # update openvas NVT's, CERT data, and CPE's once a day
-                one_day_ago = timezone('US/Eastern').localize(datetime.now()) - timedelta(hours=24)
+                one_day_ago = timezone(config.timezone).localize(datetime.now()) - timedelta(hours=24)
                 check_last_update = db_session.query(OpenvasLastUpdate).filter(
                     OpenvasLastUpdate.perception_product_uuid == system_uuid).order_by(OpenvasLastUpdate.id.desc()).first()
 
