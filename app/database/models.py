@@ -1,4 +1,4 @@
-from django.utils import timezone
+import datetime
 from sqlalchemy import Column, Integer, Text, ForeignKey, TIMESTAMP, String
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
@@ -8,7 +8,7 @@ Base = declarative_base()
 
 
 def _get_date():
-    return timezone.now()
+    return datetime.datetime.now()
 
 
 class OpenvasAdmin(Base):
