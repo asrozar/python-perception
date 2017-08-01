@@ -14,12 +14,12 @@ depends_on = None
 
 from alembic import op
 import sqlalchemy as sa
-from django.utils import timezone
+import datetime
 from sqlalchemy.dialects import postgresql
 
 
 def _get_date():
-    return timezone.now()
+    return datetime.datetime.now()
 
 
 def upgrade():

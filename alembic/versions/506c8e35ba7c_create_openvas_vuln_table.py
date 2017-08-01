@@ -8,11 +8,11 @@ Create Date: 2017-07-21 12:19:35.711173
 from sqlalchemy.dialects import postgresql
 from alembic import op
 import sqlalchemy as sa
-from django.utils import timezone
+import datetime
 
 
 def _get_date():
-    return timezone.now()
+    return datetime.datetime.now()
 
 # revision identifiers, used by Alembic.
 revision = '506c8e35ba7c'
