@@ -44,7 +44,6 @@ mq_password = 'mq_password'
 # --------------------------
 es_host = '127.0.0.1'
 es_port = 9200
-es_ssl = False
 es_index = 'perception'
 es_direct = True
 
