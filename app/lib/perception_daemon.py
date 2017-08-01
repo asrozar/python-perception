@@ -5,8 +5,8 @@ from signal import SIGTERM
 from os import remove, path, kill, getpid, chdir, dup2, fork, setsid, umask
 from sqlalchemy.exc import OperationalError
 from time import sleep
-from datetime import timedelta
-from django.utils import timezone
+from datetime import timedelta, datetime
+from pytz import timezone
 from app.database.models import OpenvasAdmin,\
     OpenvasLastUpdate,\
     SeedRouter,\
@@ -144,7 +144,7 @@ class OpenVasUpdater(object):
                     setup_openvas()
 
                 # update openvas NVT's, CERT data, and CPE's once a day
-                one_day_ago = timezone.now() - timedelta(hours=24)
+                one_day_ago = timezone('US/Eastern').localize(datetime.now()) - timedelta(hours=24)
                 check_last_update = db_session.query(OpenvasLastUpdate).filter(
                     OpenvasLastUpdate.perception_product_uuid == system_uuid).order_by(OpenvasLastUpdate.id.desc()).first()
 
@@ -158,7 +158,7 @@ class OpenVasUpdater(object):
                         migrate_rebuild_db()
 
                         syslog.syslog(syslog.LOG_INFO, 'update')
-                        add_update_info = OpenvasLastUpdate(updated_at=timezone.now(), perception_product_uuid=system_uuid)
+                        add_update_info = OpenvasLastUpdate(updated_at=datetime.now(), perception_product_uuid=system_uuid)
                         db_session.add(add_update_info)
                         db_session.commit()
                         syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater info: Update is now complete')
