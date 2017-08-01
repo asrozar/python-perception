@@ -9,4 +9,3 @@ pika
 xlsxwriter
 splunk-sdk
 elasticsearch
-django
