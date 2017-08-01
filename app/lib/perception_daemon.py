@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from app import db_session, hostname_lookup, config, nmap_tmp_dir, system_uuid, es_add_document
+from app import db_session, hostname_lookup, config, system_uuid, es_add_document
 from signal import SIGTERM
 from os import remove, path, kill, getpid, chdir, dup2, fork, setsid, umask
 from sqlalchemy.exc import OperationalError
