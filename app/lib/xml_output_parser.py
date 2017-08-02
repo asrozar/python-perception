@@ -260,7 +260,7 @@ def parse_nmap_xml(nmap_results):
                 adjacency_switch = None
                 adjacency_int = None
 
-            ostype = None
+            os_type = None
             host_name = None
             product = None
             product_type = None
@@ -304,7 +304,7 @@ def parse_nmap_xml(nmap_results):
                 try:
                     osmatch_elm = os_elm.find('osmatch')
                     osclass_elm = osmatch_elm.findall('osclass')
-                    ostype = osclass_elm[0].get('type')
+                    os_type = osclass_elm[0].get('type')
                     try:
                         os_cpe = osclass_elm[0][0].text
                     except IndexError:
@@ -373,7 +373,6 @@ def parse_nmap_xml(nmap_results):
 
                         service_name = None
                         ex_info = None
-                        # service_product = None
                         svc_cpe_product = None
 
                         svc_cpe = str()
@@ -481,21 +480,21 @@ def parse_nmap_xml(nmap_results):
                             port_dict_list.append(inventory_port)
                             port_list.append(port_dict)
 
-                inventory_host = {'nmap_discovery_ipv4_addr': ipv4,
-                                  'nmap_discovery_ipv6_addr': ipv6,
-                                  'nmap_discovery_macaddr': mac_addr,
-                                  'nmap_discovery_host_type': ostype,
-                                  'nmap_discovery_mac_vendor': mac_vendor,
-                                  'nmap_discovery_state': state,
-                                  'nmap_discovery_host_name': host_name,
-                                  'nmap_discovery_product': product,
-                                  'nmap_discovery_adjacency_switch': adjacency_switch,
-                                  'nmap_discovery_adjacency_int': adjacency_int}
+                inventory_host = {'nmap_ipv4': ipv4,
+                                  'nmap_ipv6': ipv6,
+                                  'nmap_mac_addr': mac_addr,
+                                  'nmap_os_type': os_type,
+                                  'nmap_mac_vendor': mac_vendor,
+                                  'nmap_state': state,
+                                  'nmap_host_name': host_name,
+                                  'nmap_product': product,
+                                  'nmap_adjacency_switch': adjacency_switch,
+                                  'nmap_adjacency_int': adjacency_int}
 
-                host_dict = {'nmap_discovery_inventory_host': inventory_host,
-                             'nmap_discovery_ports': port_dict_list,
-                             'nmap_discovery_perception_product_uuid': system_uuid,
-                             'nmap_discovery_timestamp': int(time.time())}
+                host_dict = {'nmap_inventory_host': inventory_host,
+                             'nmap_ports': port_dict_list,
+                             'nmap_perception_product_uuid': system_uuid,
+                             'nmap_timestamp': int(time.time())}
 
                 host_dict_4ov = {'ipv4': ipv4,
                                  'ipv6': ipv6,
