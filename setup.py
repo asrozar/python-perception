@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 setup(
     # Application name:
@@ -12,7 +12,7 @@ setup(
     author_email="avery.rozar@critical-sec.com",
 
     # Packages
-    packages=["perception"],
+    packages=find_packages(),
 
     # Include additional files into the package
     include_package_data=True,
@@ -25,18 +25,4 @@ setup(
     description="",
 
     long_description=open("README.md").read(),
-
-    # Dependent packages (distributions)
-    install_requires=['alembic',
-                      'sqlalchemy',
-                      'scapy',
-                      'pyOpenSSL',
-                      'psycopg2',
-                      'cryptography',
-                      'pexpect',
-                      'pika',
-                      'xlsxwriter',
-                      'splunk-sdk',
-                      'elasticsearch',
-                      ],
 )
