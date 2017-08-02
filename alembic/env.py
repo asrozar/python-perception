@@ -30,7 +30,7 @@ target_metadata = None
 db_yml = getenv('PERCEPTION_DB_INFO')
 
 if db_yml is None:
-    db_yml = 'app/config/database.yml'
+    db_yml = 'perception/config/database.yml'
 
 new_list = []
 reg_clean = re.compile(r'[:]')

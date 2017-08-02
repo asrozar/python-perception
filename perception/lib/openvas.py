@@ -5,9 +5,9 @@ from subprocess import call
 from re import match, search
 from subprocess import check_output, CalledProcessError, PIPE
 from time import sleep
-from app.lib.xml_output_parser import parse_openvas_xml
-from app.database.models import OpenvasAdmin, OpenvasLastUpdate
-from app import db_session, system_uuid
+from perception.lib.xml_output_parser import parse_openvas_xml
+from perception.database.models import OpenvasAdmin, OpenvasLastUpdate
+from perception import db_session, system_uuid
 import syslog
 
 redis_conf = '/etc/redis/redis.conf'

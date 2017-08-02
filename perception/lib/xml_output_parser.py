@@ -3,8 +3,8 @@ import syslog
 import json
 import time
 from socket import gethostbyaddr, herror
-from app import get_or_create, Session, system_uuid, es_add_document, config
-from app.database.models import NmapHost, OpenVasVuln
+from perception import get_or_create, Session, system_uuid, es_add_document, config
+from perception.database.models import NmapHost, OpenVasVuln
 from send_message import SendToRabbitMQ
 
 

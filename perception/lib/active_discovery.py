@@ -1,7 +1,7 @@
 from os import makedirs, devnull, path, remove
 from subprocess import Popen, PIPE, call
-from app.lib.xml_output_parser import parse_nmap_xml, parse_openvas_xml
-from app.lib.openvas import create_port_list,\
+from perception.lib.xml_output_parser import parse_nmap_xml, parse_openvas_xml
+from perception.lib.openvas import create_port_list,\
     create_config,\
     create_target,\
     create_task,\
@@ -15,7 +15,7 @@ from app.lib.openvas import create_port_list,\
     get_report, \
     delete_port_list,\
     delete_config
-from app import check_if_valid_cider, check_if_valid_address, nmap_tmp_dir
+from perception import check_if_valid_cider, check_if_valid_address, nmap_tmp_dir
 import threading
 import syslog
 import time

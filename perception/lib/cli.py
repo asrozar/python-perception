@@ -1,7 +1,7 @@
 import readline
-from app import db_session, check_if_valid_address, system_uuid
+from perception import db_session, check_if_valid_address, system_uuid
 from subprocess import call, Popen, PIPE
-from app.database.models import OpenvasAdmin,\
+from perception.database.models import OpenvasAdmin,\
     OpenvasLastUpdate,\
     SvcUser,\
     SeedRouter,\

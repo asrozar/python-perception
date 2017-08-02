@@ -1,4 +1,4 @@
-from app import config
+from perception import config
 from pika import PlainCredentials, BlockingConnection, ConnectionParameters, BasicProperties, exceptions
 import threading
 import syslog
@@ -36,4 +36,3 @@ class SendToRabbitMQ(object):
 
         except exceptions.ChannelClosed as che:
             syslog.syslog(syslog.LOG_INFO, 'SendToRabbitMQ error: %s' % str(che))
-

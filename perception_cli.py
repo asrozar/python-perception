@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from app import db_session
+from perception import db_session
 # Perception
 #
 # Copyright (C) 2017 Avery Rozar
@@ -18,8 +18,8 @@ from app import db_session
 # WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-from app import __version__
-from app.lib.cli import cli_loop
+from perception import __version__
+from perception.lib.cli import cli_loop
 from socket import gethostname
 
 g = {}

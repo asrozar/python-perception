@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-from app import db_session, hostname_lookup, config, system_uuid, es_add_document
+from perception import db_session, hostname_lookup, config, system_uuid, es_add_document
 from signal import SIGTERM
 from os import remove, path, kill, getpid, chdir, dup2, fork, setsid, umask
 from sqlalchemy.exc import OperationalError
 from time import sleep
 from datetime import timedelta, datetime
 from pytz import timezone
-from app.database.models import OpenvasAdmin,\
+from perception.database.models import OpenvasAdmin,\
     OpenvasLastUpdate,\
     SeedRouter,\
     DiscoveryProtocolFinding, \
@@ -17,8 +17,8 @@ from app.database.models import OpenvasAdmin,\
     DoNotSeed, \
     HostWithBadSshKey, \
     HostUsingSshv1
-from app.lib.infrastructure import InterrogateRSI
-from app.lib.openvas import setup_openvas,\
+from perception.lib.infrastructure import InterrogateRSI
+from perception.lib.openvas import setup_openvas,\
     update_openvas_db,\
     migrate_rebuild_db
 from active_discovery import RunNmap, RunOpenVas, discover_live_hosts

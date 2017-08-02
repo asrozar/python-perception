@@ -2,8 +2,8 @@
 import sys
 from time import sleep
 
-from app import db_session
-from app.lib.daemon import PerceptionDaemon
+from perception import db_session
+from perception.lib.daemon import PerceptionDaemon
 
 
 # Perception

@@ -1,6 +1,6 @@
 # config files
-app/config/database.yml
-app/config/configuration.py
+perception/config/database.yml
+perception/config/configuration.py
 
 # .idea
 .idea/

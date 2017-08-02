@@ -1,7 +1,7 @@
 import datetime
 from sqlalchemy.exc import IntegrityError
-from app import es_add_document
-from app import IOS_SHOW_ARP,\
+from perception import es_add_document
+from perception import IOS_SHOW_ARP,\
     IOS_TERMLEN0,\
     IOS_SHOW_ADJACENCY,\
     IOS_SHOW_CDP_DETAIL,\
@@ -29,8 +29,8 @@ from app import IOS_SHOW_ARP,\
     Session, \
     system_uuid, \
     hostname_lookup
-from app.lib.active_discovery import RunNmap
-from app.database.models import RSInfrastructure,\
+from perception.lib.active_discovery import RunNmap
+from perception.database.models import RSInfrastructure,\
     RSAddr,\
     DiscoveryProtocolFinding,\
     SeedRouter, \

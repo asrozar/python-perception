@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from uuid import UUID
 
 # --------
-# app info
+# perception info
 # --------
 
 __name__ = 'Perception'
@@ -21,7 +21,7 @@ __author__ = 'Avery Rozar: avery.rozar@insecure-it.com'
 # ---------------------
 # get the configuration
 # ---------------------
-import app.config.configuration as config
+import perception.config.configuration as config
 
 db_config = {'drivername': config.db_drivername,
              'host': config.db_host,
