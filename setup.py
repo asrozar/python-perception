@@ -27,7 +27,7 @@ setup(
     long_description=open("README.txt").read(),
 
     # Dependent packages (distributions)
-    install_requires=['alembic',
+    install_requires=['migrations',
                       'sqlalchemy',
                       'scapy',
                       'pyOpenSSL',

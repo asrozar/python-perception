@@ -1,4 +1,3 @@
 recursive-include perception/database *
 recursive-include perception/lib *
 recursive-include perception/config *
-recursive-include alembic *
