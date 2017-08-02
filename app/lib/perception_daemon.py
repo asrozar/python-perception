@@ -110,8 +110,8 @@ class MessageBroker(object):
 
                 channel.start_consuming()
 
-            except Exception as e:
-                syslog.syslog(syslog.LOG_INFO, 'MessageBroker error: %s' % str(e))
+            except Exception as MessageBroker_e:
+                syslog.syslog(syslog.LOG_INFO, 'MessageBroker error: %s' % str(MessageBroker_e))
 
             sleep(self.interval)
 
@@ -140,8 +140,11 @@ class OpenVasUpdater(object):
                     return
 
                 if openvas_admin is None:
-                    syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater info: OpenVas needs to be configured')
+                    syslog.syslog(syslog.LOG_INFO,
+                                  'OpenVasUpdater info: OpenVas needs to be configured, this may take some time')
                     setup_openvas()
+                    syslog.syslog(syslog.LOG_INFO,
+                                  'OpenVasUpdater info: OpenVas is now setup and ready to use')
 
                 # update openvas NVT's, CERT data, and CPE's once a day
                 one_day_ago = timezone(config.timezone).localize(datetime.now()) - timedelta(hours=24)
@@ -149,19 +152,30 @@ class OpenVasUpdater(object):
                     OpenvasLastUpdate.perception_product_uuid == system_uuid).order_by(OpenvasLastUpdate.id.desc()).first()
 
                 if check_last_update is None or check_last_update.updated_at <= one_day_ago:
-                    syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater info: Updating OpenVas NVT, SCAP and CERT database')
+                    syslog.syslog(syslog.LOG_INFO,
+                                  'OpenVasUpdater info: Updating OpenVas NVT,'
+                                  ' SCAP and CERT database, this may take some time')
 
                     try:
-                        update_openvas_db()
+                        update_response = update_openvas_db()
 
-                        # migrate and rebuild the db
-                        migrate_rebuild_db()
+                        if update_response == 0:
+                            syslog.syslog(syslog.LOG_INFO,
+                                          'OpenVasUpdater info: Successfully updated OpenVas,'
+                                          ' will now rebuild the database')
 
-                        syslog.syslog(syslog.LOG_INFO, 'update')
-                        add_update_info = OpenvasLastUpdate(updated_at=datetime.now(), perception_product_uuid=system_uuid)
-                        db_session.add(add_update_info)
-                        db_session.commit()
-                        syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater info: Update is now complete')
+                            migrate_rebuild_db()
+                            syslog.syslog(syslog.LOG_INFO,
+                                          'OpenVasUpdater info: Successfully rebuilt the OpenVas database')
+
+                            add_update_info = OpenvasLastUpdate(updated_at=datetime.now(),
+                                                                perception_product_uuid=system_uuid)
+                            db_session.add(add_update_info)
+                            db_session.commit()
+                            syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater info: Update is now complete')
+
+                        elif update_response != 0:
+                            syslog.syslog(syslog.LOG_INFO, 'OpenVasUpdater error: OpenVas update was not successful')
 
                     except Exception as e:
                         db_session.rollback()
