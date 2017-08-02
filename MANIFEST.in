@@ -1,5 +1,3 @@
-recursive-include perceptiond.py
-recursive-include perception_cli.py
 recursive-include perception/database *
 recursive-include perception/lib *
 recursive-include perception/config *
