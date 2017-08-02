@@ -150,6 +150,7 @@ class DoNotSeed(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     perception_product_uuid = Column(postgresql.UUID, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
+    created_at = Column(TIMESTAMP, default=_get_date)
 
 
 class HostUsingSshv1(Base):
@@ -158,6 +159,7 @@ class HostUsingSshv1(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     perception_product_uuid = Column(postgresql.UUID, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
+    created_at = Column(TIMESTAMP, default=_get_date)
 
 
 class HostWithBadSshKey(Base):
@@ -166,6 +168,7 @@ class HostWithBadSshKey(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     perception_product_uuid = Column(postgresql.UUID, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
+    created_at = Column(TIMESTAMP, default=_get_date)
 
 
 class NmapHost(Base):
