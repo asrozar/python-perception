@@ -1,15 +1,14 @@
+import httplib
+import json
+import syslog
+import splunklib.client as client
 from os import getenv
-from uuid import UUID
+from re import match
+from socket import gethostbyaddr, herror
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import sessionmaker
-from socket import gethostbyaddr, herror
-from re import match
-import splunklib.client as client
-import syslog
-import json
-import httplib
-
+from uuid import UUID
 
 # ---------------------
 # get the configuration
@@ -30,12 +29,6 @@ with open('/etc/product_uuid', 'r') as f:
         syslog.syslog(syslog.LOG_INFO, 'Error: System UUID not found')
         print('Error: System UUID not found')
         exit(99)
-
-# --------
-# app info
-# --------
-__version__ = '0.5'
-__author__ = 'Avery Rozar: avery.rozar@insecure-it.com'
 
 # -----------------------
 # Connect to the database
