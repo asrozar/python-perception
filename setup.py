@@ -12,7 +12,7 @@ setup(
     author_email="avery.rozar@critical-sec.com",
 
     # Packages
-    packages=["app"],
+    packages=["perception"],
 
     # Include additional files into the package
     include_package_data=True,
