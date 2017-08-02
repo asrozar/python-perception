@@ -109,28 +109,28 @@ def verify_certificate_chain(cert_str, trusted_certs):
 
 
 def update_openvas_db():
-    syslog.syslog(syslog.LOG_INFO, 'Attempting to update OpenVas, this may take some time')
     greenbone_nvt_sync = call(['greenbone-nvt-sync'], stdout=PIPE)
 
     if greenbone_nvt_sync == 0:
-        syslog.syslog(syslog.LOG_INFO, 'OpenVas NVT synced successfully')
         greenbone_scapdata_sync = call(['greenbone-scapdata-sync'], stdout=PIPE)
 
         if greenbone_scapdata_sync == 0:
-            syslog.syslog(syslog.LOG_INFO, 'OpenVas Scap Data synced successfully ')
             greenbone_certdata_sync = call(['greenbone-certdata-sync'], stdout=PIPE)
 
             if greenbone_certdata_sync == 0:
-                syslog.syslog(syslog.LOG_INFO, 'OpenVas Cert data synced successfully')
+                return 0
 
             elif greenbone_certdata_sync != 0:
                 syslog.syslog(syslog.LOG_INFO, 'Failed tp sync OpenVas Cert Data')
+                return 99
 
         elif greenbone_scapdata_sync != 0:
             syslog.syslog(syslog.LOG_INFO, 'Failed to sync OpenVas Scap Data')
+            return 99
 
     elif greenbone_nvt_sync != 0:
         syslog.syslog(syslog.LOG_INFO, 'Failed to sync OpenVas NVT')
+        return 99
 
 
 def migrate_rebuild_db():
@@ -144,17 +144,13 @@ def migrate_rebuild_db():
             openvasssd = call(['openvassd'], stdout=PIPE)
 
             if stop_manager == 0:
-                syslog.syslog(syslog.LOG_INFO, 'Migrating the OpenVas database')
                 openvasmd_migrate = call(['openvasmd', '--migrate'], stdout=PIPE)
 
                 if openvasmd_migrate == 0:
-                    syslog.syslog(syslog.LOG_INFO, 'Rebuilding the OpenVas database, this will take some time')
                     openvasmd_rebuild = call(['openvasmd', '--rebuild'])
 
                     if openvasmd_rebuild == 0:
-                        syslog.syslog(syslog.LOG_INFO, 'OpenVas rebuild database was successful')
                         killall_openvas = call(['killall', 'openvassd'], stdout=PIPE)
-
                         sleep(15)
 
                         if killall_openvas == 0:
