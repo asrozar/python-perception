@@ -1,5 +1,11 @@
 #!/usr/bin/env python
+import sys
+from time import sleep
+
 from app import db_session
+from app.lib.daemon import PerceptionDaemon
+
+
 # Perception
 #
 # Copyright (C) 2017 Avery Rozar
@@ -18,10 +24,6 @@ from app import db_session
 # WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 # OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-from app.lib.perception_daemon import PerceptionDaemon
-from time import sleep
-import sys
 
 
 # Local Class
