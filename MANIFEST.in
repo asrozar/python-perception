@@ -1,0 +1,3 @@
+recursive-include app/database *
+recursive-include app/lib *
+recursive-include app/config *
