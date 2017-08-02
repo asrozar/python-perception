@@ -12,7 +12,7 @@ setup(
     author_email="avery.rozar@critical-sec.com",
 
     # Packages
-    packages=find_packages(),
+    packages=find_packages(exclude=('tests', 'docs')),
 
     # Include additional files into the package
     include_package_data=True,
