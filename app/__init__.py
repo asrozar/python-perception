@@ -10,6 +10,14 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.orm import sessionmaker
 from uuid import UUID
 
+# --------
+# app info
+# --------
+
+__name__ = 'Perception'
+__version__ = '0.5'
+__author__ = 'Avery Rozar: avery.rozar@insecure-it.com'
+
 # ---------------------
 # get the configuration
 # ---------------------
