@@ -38,5 +38,4 @@ setup(
                       'xlsxwriter',
                       'splunk-sdk',
                       'elasticsearch',
-                      ],
-)
+                      ])
