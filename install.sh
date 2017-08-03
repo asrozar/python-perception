@@ -15,12 +15,12 @@ fi
 arch=$(uname -m)
 kernal=$(uname -r)
 adduser_conf="/etc/adduser.conf"
-etc_perception="/etc/perception"
+etc_perception="/etc/perception/"
 perception_config="/usr/local/lib/python2.7/dist-packages/perception/config/"
 perceptiond="/usr/bin/perceptiond"
 perception_cli="/usr/bin/perception_cli"
 perceptiond_service="perceptiond.service"
-end_msg="\n[*] Perception installation is complete [*]\n[*] Complete the configuration at /etc/perception/configuration.py [*]\n[*] To start the Perception Daemon on boot type 'systemctl enable perceptiond.service' [*]"
+end_msg="\n[*] Perception installation is complete [*]\n[*] Complete the configuration at /etc/perception/config/configuration.py [*]\n[*] To start the Perception Daemon on boot type 'systemctl enable perceptiond.service' [*]"
 
 if [[ ! "$kernal" =~ "kali" ]];
 then
@@ -50,7 +50,8 @@ then
         if [ ! -L ${etc_perception} ];
 
             then
-                ln -s ${etc_perception} ${perception_config};
+                mkdir ${etc_perception}
+                ln -s ${perception_config} ${etc_perception} ;
 
         fi
 
@@ -95,8 +96,8 @@ if [[ ! -f "/etc/systemd/system/perceptiond.service" ]];
             cp ${perceptiond_service} "/etc/systemd/system/perceptiond.service"
             if [[ ! -f ${etc_perception}"configuration.py" ]]
                 then
-                    cp ${perception_config}"configuration-example.py" ${etc_perception}"configuration.py"
-                    chmod 640 ${perception_config}"configuration.py"
+                    cp ${perception_config}"configuration-example.py" ${etc_perception}"config/configuration.py"
+                    chmod 640 ${etc_perception}"config/configuration.py"
             fi
 fi
 
