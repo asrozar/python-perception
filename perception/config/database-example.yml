@@ -1,8 +1,0 @@
-# Configuration File
-
-# Database Info
-drivername: postgres
-host: localhost
-database: perception_db
-username: perception_user
-password: perception_passwd
