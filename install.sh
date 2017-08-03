@@ -31,13 +31,13 @@ fi
 
 python setup.py sdist > /tmp/python-perception-sdist.log 2> /dev/null
 
-if [ $? = 0 ];
+if [ $? -eq 0 ];
 
 then
     perception_zip=$(ls -1 dist | tr '\n' '\0' | xargs -0 -n 1 basename)
     pip2 install dist/${perception_zip} > /tmp/python-perception-install.log 2> /dev/null;
 
-    if [ $? = 0 ];
+    if [ $? -eq 0 ];
     then
 
         if [ ! -L ${etc_perception} ];
