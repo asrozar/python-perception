@@ -35,6 +35,15 @@ if [ $? -eq 0 ];
 
 then
     perception_zip=$(ls -1 dist | tr '\n' '\0' | xargs -0 -n 1 basename)
+    echo ${perception_zip}
+
+    wich pip
+
+    if [ $? -ne 0 ];
+    then
+        apt-get install python-pip -y > /tmp/python-pip-install.log 2> /dev/null;
+    fi
+
     pip2 install dist/${perception_zip} > /tmp/python-perception-install.log 2> /dev/null;
 
     if [ $? -eq 0 ];
