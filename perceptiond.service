@@ -1,0 +1,12 @@
+[Unit]
+Description=Start Perception Daemon service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/perceptiond start
+ExecStop=/usr/bin/perceptiond stop
+ExecStop=/usr/bin/perceptiond restart
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
