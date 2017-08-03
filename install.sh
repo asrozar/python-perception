@@ -37,7 +37,7 @@ then
     perception_zip=$(ls -1 dist | tr '\n' '\0' | xargs -0 -n 1 basename)
     pip2 install dist/${perception_zip} > /tmp/python-perception-install.log 2> /dev/null;
 
-    if $? = 0;
+    if [ $? = 0 ];
     then
 
         if [ ! -L ${etc_perception} ];
@@ -86,7 +86,7 @@ fi
 if [ ! -f "/etc/systemd/system/perceptiond.service" ];
         then
             cp ${perceptiond_service} "/etc/systemd/system/perceptiond.service"
-            if [! -f ${etc_perception}"configuration.py"]
+            if [ ! -f ${etc_perception}"configuration.py" ]
                 then
                     cp ${perception_config}"configuration-example.py" ${etc_perception}"configuration.py"
                     chmod 640 ${perception_config}+"configuration.py"
