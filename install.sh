@@ -47,7 +47,7 @@ then
 
         fi
 
-        if [ ! -f ${perceptiond} ];
+        if [[ ! -f ${perceptiond} ]];
 
         then
             echo "#!/usr/bin/python2" > ${perceptiond};
@@ -64,7 +64,7 @@ then
             chmod +x ${perceptiond}
         fi
 
-        if [ ! -f ${perception_cli} ];
+        if [[ ! -f ${perception_cli} ]];
 
         then
             echo "#!/usr/bin/python2" > ${perception_cli};
@@ -83,23 +83,23 @@ then
     fi
 fi
 
-if [ ! -f "/etc/systemd/system/perceptiond.service" ];
+if [[ ! -f "/etc/systemd/system/perceptiond.service" ]];
         then
             cp ${perceptiond_service} "/etc/systemd/system/perceptiond.service"
-            if [ ! -f ${etc_perception}"configuration.py" ]
+            if [[ ! -f ${etc_perception}"configuration.py" ]]
                 then
                     cp ${perception_config}"configuration-example.py" ${etc_perception}"configuration.py"
                     chmod 640 ${perception_config}+"configuration.py"
             fi
 fi
 
-read -r -p "Would you like to use Perception CLI as the default shell when adduser is invoked?" input
+read -r -p "Would you like to use Perception CLI as the default shell when adduser is invoked? " input
 
 case ${input} in
     [nN][oO][nN])
-        ${end_msg}
+        echo ${end_msg}
         exit 1;
 esac
 
 sed -i "s/DSHELL=\/bin\/bash/DSHELL=\/usr\/bin\/perception_cli" ${adduser_conf}
-${end_msg}
+echo ${end_msg}
