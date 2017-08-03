@@ -1,6 +1,6 @@
 #!/bin/bash
 ###
-## Perception
+## Perception Installer
 ## Copyright (C) 2017  CriticalSecurity, LLC LLC (https://www.critical-sec.com/)
 ## See the file 'LICENSE.txt' for the license information
 ###
