@@ -1,11 +1,9 @@
 from __future__ import with_statement
 from alembic import context
-from sqlalchemy import engine_from_config, pool, create_engine
+from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from logging.config import fileConfig
-
-from os import getenv
-import re
+from ...config import configuration as myconfig
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -26,31 +24,18 @@ target_metadata = None
 # my_important_option = config.get_main_option("my_important_option")
 # ... config.
 
-# database yaml file for connectivity info
-db_yml = getenv('PERCEPTION_DB_INFO')
-
-if db_yml is None:
-    db_yml = 'perception/config/database.yml'
-
-new_list = []
-reg_clean = re.compile(r'[:]')
-
-with open(db_yml, 'r') as f:
-  new_list += [re.sub(r':\s', ':', line.strip()) for line in f if reg_clean.search(line)]
-  config_info = dict(map(str, x.split(':')) for x in new_list)
-
-db_info = {'drivername': config_info['drivername'],
-           'username': config_info['username'],
-           'password': config_info['password'],
-           'host': config_info['host'],
-           'database': config_info['database']}
+db_config = {'drivername': myconfig.db_drivername,
+             'host': myconfig.db_host,
+             'database': myconfig.database,
+             'username': myconfig.db_username,
+             'password': myconfig.db_password}
 
 # build URL
-sqlalchemy_url = '%s://%s:%s@%s/%s' % (config_info['drivername'],
-                                       config_info['username'],
-                                       config_info['password'],
-                                       config_info['host'],
-                                       config_info['database'])
+sqlalchemy_url = '%s://%s:%s@%s/%s' % (myconfig.db_drivername,
+                                       myconfig.db_username,
+                                       myconfig.db_password,
+                                       myconfig.db_host,
+                                       myconfig.database)
 
 
 def run_migrations_offline():
@@ -80,7 +65,7 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    connectable = create_engine(URL(**db_info), pool_size=20)
+    connectable = create_engine(URL(**db_config), pool_size=20)
 
     with connectable.connect() as connection:
         context.configure(
