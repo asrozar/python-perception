@@ -20,8 +20,7 @@ perception_config="/usr/local/lib/python2.7/dist-packages/perception/config/"
 perceptiond="/usr/bin/perceptiond"
 perception_cli="/usr/bin/perception_cli"
 perceptiond_service="perceptiond.service"
-end_msg="[*] Perception installation is complete.\nComplete the configuration at /etc/perception/configuration.py.
-\nTo start the Perception Daemon on boot type\"systemctl enable perceptiond.service\""
+end_msg="\n[*] Perception installation is complete [*]\n[*] Complete the configuration at /etc/perception/configuration.py [*]\n[*] To start the Perception Daemon on boot type 'systemctl enable perceptiond.service' [*]"
 
 if [[ ! "$kernal" =~ "kali" ]];
 then
@@ -35,9 +34,8 @@ if [ $? -eq 0 ];
 
 then
     perception_zip=$(ls -1 dist | tr '\n' '\0' | xargs -0 -n 1 basename)
-    echo ${perception_zip}
 
-    which pip
+    which pip > /dev/null
 
     if [ $? -ne 0 ];
     then
@@ -52,7 +50,7 @@ then
         if [ ! -L ${etc_perception} ];
 
             then
-                ln -s ${perception_config} ${etc_perception};
+                ln -s ${etc_perception} ${perception_config};
 
         fi
 
@@ -102,13 +100,13 @@ if [[ ! -f "/etc/systemd/system/perceptiond.service" ]];
             fi
 fi
 
-read -r -p "Would you like to use Perception CLI as the default shell when adduser is invoked? " input
+read -r -p "Would you like to use Perception CLI as the default shell when adduser is invoked? [Y/N]" input
 
 case ${input} in
     [nN][oO][nN])
-        echo ${end_msg}
+        echo -e ${end_msg}
         exit 1;
 esac
 
 sed -i "s/DSHELL=\/bin\/bash/DSHELL=\/usr\/bin\/perception_cli" ${adduser_conf}
-echo ${end_msg}
+echo -e ${end_msg}
