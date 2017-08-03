@@ -100,6 +100,7 @@ if [[ ! -f "/etc/systemd/system/perceptiond.service" ]];
                     cp ${perception_config}"configuration-example.py" ${etc_perception}"config/configuration.py"
 
                     # TODO: how can I avoid this? Would rather this be 640
+                    # CLI needs the config, may need to move sensitive info somewhere else
                     chmod 644 ${etc_perception}"config/configuration.py"
             fi
 fi
