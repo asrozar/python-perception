@@ -37,7 +37,7 @@ then
     perception_zip=$(ls -1 dist | tr '\n' '\0' | xargs -0 -n 1 basename)
     echo ${perception_zip}
 
-    wich pip
+    which pip
 
     if [ $? -ne 0 ];
     then
