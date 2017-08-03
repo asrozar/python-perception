@@ -14,6 +14,14 @@ fi
 # os check
 arch=$(uname -m)
 kernal=$(uname -r)
+adduser_conf="/etc/adduser.conf"
+etc_perception="/etc/perception/"
+perception_config="/usr/local/lib/python2.7/dist-packages/perception/config/"
+perceptiond="/usr/bin/perceptiond"
+perception_cli="/usr/bin/perception_cli"
+perceptiond_service="perceptiond.service"
+end_msg="[*] Perception installation is complete.\nComplete the configuration at /etc/perception/configuration.py.
+\nTo start the Perception Daemon on boot type\"systemctl enable perceptiond.service\""
 
 if [[ "$kernal" =~ *."kali".* ]];
 then
@@ -23,6 +31,69 @@ else
     exit 1
 fi
 
-python setup.py sdist
+python setup.py sdist > /tmp/python-perception-sdist.log 2> /dev/null
 
-#if $? = 0;
+if $? = 0;
+
+then
+    perception_zip=$(ls -1 dist | tr '\n' '\0' | xargs -0 -n 1 basename)
+    pip2 install dist/${perception_zip} > /tmp/python-perception-install.log 2> /dev/null;
+
+    if $? = 0;
+    then
+
+        if [! -L ${etc_perception}];
+
+            then
+                ln -s ${perception_config} ${etc_perception};
+
+        fi
+
+        if [! -f ${perceptiond}];
+
+        then
+            echo "#!/usr/bin/python2" > ${perceptiond};
+            echo "# generated via install.sh" >> ${perceptiond};
+            echo "" >> ${perceptiond};
+            echo "import sys" >> ${perceptiond};
+            echo "" >> ${perceptiond};
+            echo "from perception.perceptiond import main" >> ${perceptiond};
+            echo "" >> ${perceptiond};
+            echo "" >> ${perceptiond};
+            echo "if __name__ == \"__main__\":" >> ${perceptiond};
+            echo "    sys.exit(main())" >> ${perceptiond};
+            echo "" >> ${perceptiond};
+            chmod +x ${perceptiond}
+        fi
+
+        if [! -f ${perception_cli}];
+
+        then
+            echo "#!/usr/bin/python2" > ${perception_cli};
+            echo "# generated via install.sh" >> ${perception_cli};
+            echo "" >> ${perception_cli};
+            echo "import sys" >> ${perception_cli};
+            echo "" >> ${perceptiond};
+            echo "from perception.perception_cli import main" >> ${perception_cli};
+            echo "" >> ${perception_cli};
+            echo "" >> ${perception_cli};
+            echo "if __name__ == \"__main__\":" >> ${perception_cli};
+            echo "    sys.exit(main())" >> ${perception_cli};
+            echo "" >> ${perception_cli};
+            chmod +x ${perception_cli}
+        fi
+    fi
+fi
+
+cp ${perceptiond_service} "/etc/systemd/system/perceptiond.service"
+
+read -r -p "Would you like to use Perception CLI as the default shell when adduser is invoked?" input
+
+case ${input} in
+    [nN][oO][nN])
+        ${end_msg}
+        exit 1;
+esac
+
+sed -i "s/DSHELL=\/bin\/bash/DSHELL=\/usr\/bin\/perception_cli" ${adduser_conf}
+${end_msg}
