@@ -11,23 +11,33 @@ if [ $EUID -ne 0 ]; then
  exit 1
 fi
 
-# os check
-arch=$(uname -m)
 kernal=$(uname -r)
+unsupported="Perception is built for Kali Linux, this system is unsupported"
+dmi_product_id="/sys/devices/virtual/dmi/id/product_uuid"
+product_uuid="/etc/product_uuid"
+python_shebang="#!/usr/bin/python2"
+generator_msg="# generated via install.sh"
+importsys="import sys"
+ifnamemain="if __name__ == \"__main__\":"
+py_sysexit="    sys.exit(main())"
 adduser_conf="/etc/adduser.conf"
 etc_perception="/etc/perception/"
 perception_config="/usr/local/lib/python2.7/dist-packages/perception/config/"
 perceptiond="/usr/bin/perceptiond"
 perception_cli="/usr/bin/perception_cli"
 perceptiond_service="perceptiond.service"
-end_msg="\n[*] Perception installation is complete [*]\n[*] Complete the configuration at /etc/perception/config/configuration.py [*]\n[*] To start the Perception Daemon on boot type 'systemctl enable perceptiond.service' [*]"
+end_msg="\n[*] Perception installation is complete\n
+[*] Complete the configuration at /etc/perception/config/configuration.py\n
+[*] To start the Perception Daemon on boot type \"systemctl enable perceptiond.service\""
 
-if [[ ! "$kernal" =~ "kali" ]];
+# os check
+if [[ ! "$kernal" =~ "kali4" ]];
 then
-    echo "Perception is built for Kali Linux, this system is not Kali Linux"
+    echo ${unsupported}
     exit 1
 fi
 
+# build the sdist package
 python setup.py sdist > /tmp/python-perception-sdist.log 2> /dev/null
 
 if [ $? -eq 0 ];
@@ -35,18 +45,20 @@ if [ $? -eq 0 ];
 then
     perception_zip=$(ls -1 dist | tr '\n' '\0' | xargs -0 -n 1 basename)
 
-    which pip > /dev/null
+    # make sure pip2 is installed
+    which pip2 > /dev/null
 
     if [ $? -ne 0 ];
     then
         apt-get install python-pip -y > /tmp/python-pip-install.log 2> /dev/null;
     fi
 
-    pip2 install dist/${perception_zip} > /tmp/python-perception-install.log 2> /dev/null;
+    # use pip2 to install or upgrade
+    pip2 install --upgrade dist/${perception_zip} > /tmp/python-perception-install.log 2> /dev/null;
 
     if [ $? -eq 0 ];
     then
-        cat "/sys/devices/virtual/dmi/id/product_uuid" > "/etc/product_uuid"
+        cat ${dmi_product_id} > ${product_uuid}
 
         if [ ! -L ${etc_perception} ];
 
@@ -59,34 +71,34 @@ then
         if [[ ! -f ${perceptiond} ]];
 
         then
-            echo "#!/usr/bin/python2" > ${perceptiond};
-            echo "# generated via install.sh" >> ${perceptiond};
-            echo "" >> ${perceptiond};
-            echo "import sys" >> ${perceptiond};
-            echo "" >> ${perceptiond};
+            echo ${python_shebang} > ${perceptiond};
+            echo ${generator_msg} >> ${perceptiond};
+            echo >> ${perceptiond};
+            echo ${importsys} >> ${perceptiond};
+            echo >> ${perceptiond};
             echo "from perception.perceptiond import main" >> ${perceptiond};
-            echo "" >> ${perceptiond};
-            echo "" >> ${perceptiond};
-            echo "if __name__ == \"__main__\":" >> ${perceptiond};
-            echo "    sys.exit(main())" >> ${perceptiond};
-            echo "" >> ${perceptiond};
+            echo >> ${perceptiond};
+            echo >> ${perceptiond};
+            echo ${ifnamemain} >> ${perceptiond};
+            echo ${py_sysexit} >> ${perceptiond};
+            echo >> ${perceptiond};
             chmod +x ${perceptiond}
         fi
 
         if [[ ! -f ${perception_cli} ]];
 
         then
-            echo "#!/usr/bin/python2" > ${perception_cli};
-            echo "# generated via install.sh" >> ${perception_cli};
-            echo "" >> ${perception_cli};
-            echo "import sys" >> ${perception_cli};
-            echo "" >> ${perceptiond};
+            echo ${python_shebang}  ${perception_cli};
+            echo ${generator_msg} >> ${perception_cli};
+            echo >> ${perception_cli};
+            echo ${importsys} >> ${perception_cli};
+            echo >> ${perceptiond};
             echo "from perception.perception_cli import main" >> ${perception_cli};
-            echo "" >> ${perception_cli};
-            echo "" >> ${perception_cli};
-            echo "if __name__ == \"__main__\":" >> ${perception_cli};
-            echo "    sys.exit(main())" >> ${perception_cli};
-            echo "" >> ${perception_cli};
+            echo >> ${perception_cli};
+            echo >> ${perception_cli};
+            echo ${ifnamemain} >> ${perception_cli};
+            echo ${py_sysexit} >> ${perception_cli};
+            echo >> ${perception_cli};
             chmod +x ${perception_cli}
         fi
     fi
