@@ -38,4 +38,5 @@ setup(
                       'xlsxwriter',
                       'splunk-sdk',
                       'elasticsearch',
+                      'pytz',
                       ])
