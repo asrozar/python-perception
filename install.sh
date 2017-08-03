@@ -46,6 +46,7 @@ then
 
     if [ $? -eq 0 ];
     then
+        cat "/sys/devices/virtual/dmi/id/product_uuid" > "/etc/product_uuid"
 
         if [ ! -L ${etc_perception} ];
 
@@ -97,7 +98,9 @@ if [[ ! -f "/etc/systemd/system/perceptiond.service" ]];
             if [[ ! -f ${etc_perception}"configuration.py" ]]
                 then
                     cp ${perception_config}"configuration-example.py" ${etc_perception}"config/configuration.py"
-                    chmod 640 ${etc_perception}"config/configuration.py"
+
+                    # TODO: how can I avoid this? Would rather this be 640
+                    chmod 644 ${etc_perception}"config/configuration.py"
             fi
 fi
 
