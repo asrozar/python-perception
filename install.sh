@@ -26,9 +26,7 @@ perception_config="/usr/local/lib/python2.7/dist-packages/perception/config/"
 perceptiond="/usr/bin/perceptiond"
 perception_cli="/usr/bin/perception_cli"
 perceptiond_service="perceptiond.service"
-end_msg="\n[*] Perception installation is complete\n
-[*] Complete the configuration at /etc/perception/config/configuration.py\n
-[*] To start the Perception Daemon on boot type \"systemctl enable perceptiond.service\""
+end_msg="\n[*] Perception installation is complete\n[*] Complete the configuration at /etc/perception/config/configuration.py\n[*] To start the Perception Daemon on boot type \"systemctl enable perceptiond.service\""
 
 # os check
 if [[ ! "$kernal" =~ "kali4" ]];
@@ -88,7 +86,7 @@ then
         if [[ ! -f ${perception_cli} ]];
 
         then
-            echo ${python_shebang}  ${perception_cli};
+            echo ${python_shebang} > ${perception_cli};
             echo ${generator_msg} >> ${perception_cli};
             echo >> ${perception_cli};
             echo ${importsys} >> ${perception_cli};
