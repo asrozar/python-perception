@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     # Application name:
-    name="Perception",
+    name="perception",
 
     # Version number (initial):
     version="0.5",
