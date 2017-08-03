@@ -27,7 +27,7 @@ discovery_mode = 'passive'
 # Just setup PKI and stop being lazy
 # Svc Account password
 # -------------------------------------
-svc_account_passwd = 'should_setup_pki'
+# svc_account_passwd = 'should_setup_pki'
 
 # -------------------------
 # MessageQueuing
