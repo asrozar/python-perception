@@ -24,7 +24,7 @@ setup(
     license="LICENSE.txt",
     description="",
 
-    long_description=open("README.txt").read(),
+    long_description=open("README.rst").read(),
 
     # Dependent packages (distributions)
     install_requires=['migrations',
