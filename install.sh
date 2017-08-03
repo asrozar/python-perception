@@ -15,7 +15,7 @@ fi
 arch=$(uname -m)
 kernal=$(uname -r)
 adduser_conf="/etc/adduser.conf"
-etc_perception="/etc/perception/"
+etc_perception="/etc/perception"
 perception_config="/usr/local/lib/python2.7/dist-packages/perception/config/"
 perceptiond="/usr/bin/perceptiond"
 perception_cli="/usr/bin/perception_cli"
@@ -96,11 +96,11 @@ if [[ ! -f "/etc/systemd/system/perceptiond.service" ]];
             if [[ ! -f ${etc_perception}"configuration.py" ]]
                 then
                     cp ${perception_config}"configuration-example.py" ${etc_perception}"configuration.py"
-                    chmod 640 ${perception_config}+"configuration.py"
+                    chmod 640 ${perception_config}"configuration.py"
             fi
 fi
 
-read -r -p "Would you like to use Perception CLI as the default shell when adduser is invoked? [Y/N]" input
+read -r -p "Would you like to use Perception CLI as the default shell when adduser is invoked? [Y/N]: " input
 
 case ${input} in
     [nN][oO][nN])
@@ -108,5 +108,5 @@ case ${input} in
         exit 1;
 esac
 
-sed -i "s/DSHELL=\/bin\/bash/DSHELL=\/usr\/bin\/perception_cli" ${adduser_conf}
+sed -i "s/DSHELL=\/bin\/bash/DSHELL=\/usr\/bin\/perception_cli/" ${adduser_conf}
 echo -e ${end_msg}
