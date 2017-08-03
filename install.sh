@@ -31,7 +31,7 @@ fi
 
 python setup.py sdist > /tmp/python-perception-sdist.log 2> /dev/null
 
-if $? = 0;
+if [ $? = 0 ];
 
 then
     perception_zip=$(ls -1 dist | tr '\n' '\0' | xargs -0 -n 1 basename)
@@ -40,14 +40,14 @@ then
     if $? = 0;
     then
 
-        if [! -L ${etc_perception}];
+        if [ ! -L ${etc_perception} ];
 
             then
                 ln -s ${perception_config} ${etc_perception};
 
         fi
 
-        if [! -f ${perceptiond}];
+        if [ ! -f ${perceptiond} ];
 
         then
             echo "#!/usr/bin/python2" > ${perceptiond};
@@ -64,7 +64,7 @@ then
             chmod +x ${perceptiond}
         fi
 
-        if [! -f ${perception_cli}];
+        if [ ! -f ${perception_cli} ];
 
         then
             echo "#!/usr/bin/python2" > ${perception_cli};
@@ -83,7 +83,7 @@ then
     fi
 fi
 
-if [! -f "/etc/systemd/system/perceptiond.service"];
+if [ ! -f "/etc/systemd/system/perceptiond.service" ];
         then
             cp ${perceptiond_service} "/etc/systemd/system/perceptiond.service"
             if [! -f ${etc_perception}"configuration.py"]
