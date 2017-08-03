@@ -23,10 +23,8 @@ perceptiond_service="perceptiond.service"
 end_msg="[*] Perception installation is complete.\nComplete the configuration at /etc/perception/configuration.py.
 \nTo start the Perception Daemon on boot type\"systemctl enable perceptiond.service\""
 
-if [[ "$kernal" =~ *."kali".* ]];
+if [[ ! "$kernal" =~ "kali" ]];
 then
-    echo "it's kali";
-else
     echo "Perception is built for Kali Linux, this system is not Kali Linux"
     exit 1
 fi
