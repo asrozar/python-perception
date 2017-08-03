@@ -85,7 +85,15 @@ then
     fi
 fi
 
-cp ${perceptiond_service} "/etc/systemd/system/perceptiond.service"
+if [! -f "/etc/systemd/system/perceptiond.service"];
+        then
+            cp ${perceptiond_service} "/etc/systemd/system/perceptiond.service"
+            if [! -f ${etc_perception}"configuration.py"]
+                then
+                    cp ${perception_config}"configuration-example.py" ${etc_perception}"configuration.py"
+                    chmod 640 ${perception_config}+"configuration.py"
+            fi
+fi
 
 read -r -p "Would you like to use Perception CLI as the default shell when adduser is invoked?" input
 
