@@ -43,13 +43,12 @@ Example Configuration::
     es_index = 'perception'
     es_direct = True
 
-Next run the install:
+Next run the install::
     ./install.sh
-
 
 There are two parts to this application.
 
-1) Perception CLI
+1) Perception CLI::
 
     The cli is used to configure the Perception application (ie. add core routers/switches) and should
     be intuitive for network admins that are familiar with IOS type cli's. There is also show commands
@@ -57,7 +56,7 @@ There are two parts to this application.
     
         `/usr/bin/perception_cli`
 
-2) Perception Daemon
+2) Perception Daemon::
     
         `sudo /usr/bin/perceptiond start | stop | restart`
 
