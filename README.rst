@@ -13,15 +13,10 @@ Example Configuration
     # Database Info
 
     drivername: postgres
-
     host: localhost
-
     database: perception_db
-
     username: perception_user
-
     password: perception_passwd
-
 
     # Application Info
 
@@ -73,13 +68,9 @@ Example Configuration
 
 PostgreSQL 8.4 and ^ is supported.
 
-    Next install requirements:
+    Next run the install:
 
-    `pip install -r requirements`
-
-    Then run the migration:
-
-    `alembic upgrade head`
+    ./install.sh
 
 
 There are two parts to this application.
@@ -90,11 +81,11 @@ There are two parts to this application.
     be intuitive for network admins that are familiar with IOS type cli's. There is also show commands
     to see current infrastructure and locally connected hosts.
     
-        # ./perception.py
+        # /usr/bin/perception_cli
 
 2) Perception Daemon
     
-        # sudo ./perceptiond.py start | stop | restart
+        # sudo /usr/bin/perceptiond start | stop | restart
 
     The Daemon manages three process. The SeedStarter(), DiscoveryProtocolSpider(), and RSInventoryUpdater().
     It is required that the service accounts used for for Perception are configured to use
