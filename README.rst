@@ -4,10 +4,11 @@ Perception
 Perception is a tool used to gain better network visibility by pulling LAN information from IOS
 network devices. Inventory information is indexed using Elasticsearch.
 
-First thing to do is to run the install::
-    `./install.sh`
+Run the Install::
 
-Now edit the /etc/perception/config/configuration.yml file.
+    ./install.sh
+
+Edit the /etc/perception/config/configuration.yml file.
 
 Example Configuration::
 
