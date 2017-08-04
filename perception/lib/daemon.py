@@ -141,10 +141,17 @@ class OpenVasUpdater(object):
 
                 if openvas_admin is None:
                     syslog.syslog(syslog.LOG_INFO,
-                                  'OpenVasUpdater info: OpenVas needs to be configured, this may take some time')
-                    setup_openvas()
-                    syslog.syslog(syslog.LOG_INFO,
-                                  'OpenVasUpdater info: OpenVas is now setup and ready to use')
+                                  'OpenVasUpdater info: OpenVas needs to be configured, this may take 30 minutes or more')
+                    ov_setup = setup_openvas()
+
+                    if ov_setup == 99:
+                        syslog.syslog(syslog.LOG_INFO,
+                                      'OpenVasUpdater error: OpenVas failed setup')
+                        continue
+
+                    if ov_setup != 99:
+                        syslog.syslog(syslog.LOG_INFO,
+                                      'OpenVasUpdater info: OpenVas is now setup and ready to use')
 
                 # update openvas NVT's, CERT data, and CPE's once a day
                 one_day_ago = timezone(config.timezone).localize(datetime.now()) - timedelta(hours=24)
