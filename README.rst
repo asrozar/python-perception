@@ -4,9 +4,10 @@ Perception
 Perception is a tool used to gain better network visibility by pulling LAN information from IOS
 network devices. Inventory information is indexed using Elasticsearch.
 
+First thing to do is to run the install::
+    `./install.sh`
 
-First thing to do is edit the app/config/configuration.yml file. Either store it in `/etc/perception/configuration.yml`
-or set the `PERCEPTION_CONFIG` env variable.
+Now edit the /etc/perception/config/configuration.yml file.
 
 Example Configuration::
 
@@ -43,9 +44,6 @@ Example Configuration::
     es_index = 'perception'
     es_direct = True
 
-Next run the install::
-    ./install.sh
-
 There are two parts to this application.
 
 1) Perception CLI::
@@ -54,11 +52,11 @@ There are two parts to this application.
     be intuitive for network admins that are familiar with IOS type cli's. There is also show commands
     to see current infrastructure and locally connected hosts.
     
-        `/usr/bin/perception_cli`
+    `/usr/bin/perception_cli`
 
 2) Perception Daemon::
-    
-        `sudo /usr/bin/perceptiond start | stop | restart`
+
+    `sudo /usr/bin/perceptiond start | stop | restart`
 
     The Daemon manages three process. The SeedStarter(), DiscoveryProtocolSpider(), and RSInventoryUpdater().
     It is required that the service accounts used for for Perception are configured to use
