@@ -97,5 +97,6 @@ There are two parts to this application.
     `hostname> run discovery on 172.16.1.0/24`
     
     `hostname> run vuln_scan on 172.16.1.10`
-    
+
     `hostname> run vuln_scan on 172.16.1.0/24`
+
