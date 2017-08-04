@@ -78,7 +78,7 @@ then
             echo >> ${perceptiond};
             echo >> ${perceptiond};
             echo ${ifnamemain} >> ${perceptiond};
-            echo ${py_sysexit} >> ${perceptiond};
+            echo "${py_sysexit}" >> ${perceptiond};
             echo >> ${perceptiond};
             chmod +x ${perceptiond}
         fi
@@ -95,7 +95,7 @@ then
             echo >> ${perception_cli};
             echo >> ${perception_cli};
             echo ${ifnamemain} >> ${perception_cli};
-            echo ${py_sysexit} >> ${perception_cli};
+            echo "${py_sysexit}" >> ${perception_cli};
             echo >> ${perception_cli};
             chmod +x ${perception_cli}
         fi
@@ -116,9 +116,20 @@ if [[ ! -f "/etc/systemd/system/perceptiond.service" ]];
             fi
 fi
 
-read -r -p "Would you like to use Perception CLI as the default shell when adduser is invoked? [Y/N]: " input
+read -r -p "Is this installation of Perception for a contained install? [Y/N]: " contained_input
 
-case ${input} in
+case ${contained_input} in
+    [nN][oO][nN])
+        echo
+        # wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add
+        # apt-get install apt-transport-https
+        # echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list
+        # apt-get update && apt-get install -y elasticsearch rabbitmq-server openjdk-8-jdk
+esac
+
+read -r -p "Would you like to use Perception CLI as the default shell when adduser is invoked? [Y/N]: " cli_input
+
+case ${cli_input} in
     [nN][oO][nN])
         echo -e ${end_msg}
         exit 1;
