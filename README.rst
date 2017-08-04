@@ -43,10 +43,7 @@ Example Configuration::
     es_index = 'perception'
     es_direct = True
 
-PostgreSQL 8.4 and ^ is supported.
-
-    Next run the install:
-
+Next run the install:
     ./install.sh
 
 
@@ -58,11 +55,11 @@ There are two parts to this application.
     be intuitive for network admins that are familiar with IOS type cli's. There is also show commands
     to see current infrastructure and locally connected hosts.
     
-        # /usr/bin/perception_cli
+        `/usr/bin/perception_cli`
 
 2) Perception Daemon
     
-        # sudo /usr/bin/perceptiond start | stop | restart
+        `sudo /usr/bin/perceptiond start | stop | restart`
 
     The Daemon manages three process. The SeedStarter(), DiscoveryProtocolSpider(), and RSInventoryUpdater().
     It is required that the service accounts used for for Perception are configured to use
