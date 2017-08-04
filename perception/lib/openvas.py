@@ -33,14 +33,41 @@ def setup_openvas():
 
     verify_existing_certs = call(['openvas-manage-certs', '-V'])
 
+    # enable and start redis
+    enable_redis = call(['systemctl', 'enable', 'redis-server.service'])
+
+    if enable_redis == 0:
+        start_redis = call(['systemctl', 'start', 'redis-server.service'])
+
+        if start_redis != 0:
+            syslog.syslog(syslog.LOG_INFO, 'OpenVas Setup error: Could not start Redis Server')
+            return 99
+
     if verify_existing_certs != 0:
+        syslog.syslog(syslog.LOG_INFO, 'OpenVas Setup info: OpenVas certs need to be created')
         call(['openvas-manage-certs', '-af'])
 
+    syslog.syslog(syslog.LOG_INFO, 'OpenVas Setup info: OpenVas certs are verified')
+
     # update openvas CERT, SCAP and NVT data
-    update_openvas_db()
+    update_ov = update_openvas_db()
+
+    if update_ov == 0:
+        syslog.syslog(syslog.LOG_INFO, 'OpenVas Setup info: OpenVas update was successful')
+
+    elif update_ov == 99:
+        syslog.syslog(syslog.LOG_INFO, 'OpenVas Setup error: OpenVas update failed')
+        return 99
 
     # migrate and rebuild the db
-    migrate_rebuild_db()
+    migrate = migrate_rebuild_db()
+
+    if migrate == 0:
+        syslog.syslog(syslog.LOG_INFO, 'OpenVas Setup info: OpenVas database migration was successful')
+
+    if migrate == 99:
+        syslog.syslog(syslog.LOG_INFO, 'OpenVas Setup error: OpenVas database migration failed')
+        return 99
 
     # create the admin user
     try:
@@ -67,6 +94,14 @@ def setup_openvas():
     db_session.add(add_update_info)
 
     db_session.commit()
+
+    enable_openvas_manager = call(['systemctl', 'enable', 'openvas-scanner'])
+    if enable_openvas_manager != 0:
+        syslog.syslog(syslog.LOG_INFO, 'OpenVas Setup error: Could not enable openvas-scanner as a startup service')
+
+    enable_openvas_scanner = call(['systemctl', 'enable', 'openvas-scanner'])
+    if enable_openvas_scanner != 0:
+        syslog.syslog(syslog.LOG_INFO, 'OpenVas Setup error: Could not enable openvas-scanner as a startup service')
 
 
 def check_redis_unixsocket_conf(conf):
@@ -154,34 +189,45 @@ def migrate_rebuild_db():
                         sleep(15)
 
                         if killall_openvas == 0:
-                            start_openvas_scanner = call(['service', 'openvas-scanner', 'start'], stdout=PIPE)
+                            start_openvas_scanner = call(['systemctl', 'start', 'openvas-scanner'], stdout=PIPE)
 
                             if start_openvas_scanner == 0:
-                                start_openvas_manager = call(['service', 'openvas-manager', 'start'], stdout=PIPE)
+                                start_openvas_manager = call(['systemctl', 'start', 'openvas-manager'], stdout=PIPE)
+
+                                if start_openvas_manager == 0:
+                                    return 0
 
                                 if start_openvas_manager != 0:
                                     syslog.syslog(syslog.LOG_INFO, 'Failed to start OpenVas Manager')
+                                    return 99
 
                             if start_openvas_scanner != 0:
                                 syslog.syslog(syslog.LOG_INFO, 'Failed to start OpenVas Scanner')
+                                return 99
 
                         elif killall_openvas != 0:
                             syslog.syslog(syslog.LOG_INFO, 'Failed to kill all OpenVas Services')
+                            return 99
 
                     elif openvasmd_rebuild != 0:
                         syslog.syslog(syslog.LOG_INFO, 'Failed to rebuild OpenVas database')
+                        return 99
 
                 elif openvasmd_migrate != 0:
                     syslog.syslog(syslog.LOG_INFO, 'Failed to run OpenVas Migrate')
+                    return 99
 
             elif openvasssd != 0:
                 syslog.syslog(syslog.LOG_INFO, 'Failed openvassd')
+                return 99
 
         elif openvas_stop_scanner != 0:
             syslog.syslog(syslog.LOG_INFO, 'Failed to stop  OpenVas Scanner')
+            return 99
 
     elif stop_manager != 0:
         syslog.syslog(syslog.LOG_INFO, 'Failed to stop  OpenVas Manager')
+        return 99
 
 
 def get_info(info_type, filter_term, openvas_user_username, openvas_user_password):
