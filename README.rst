@@ -11,47 +11,75 @@ or set the `PERCEPTION_CONFIG` env variable.
 Example Configuration
 
     # Database Info
+
     drivername: postgres
+
     host: localhost
+
     database: perception_db
+
     username: perception_user
+
     password: perception_passwd
 
+
     # Application Info
+
     discovery_mode: passive
 
     # You should not use this
+
     # Setup PKI and stop being lazy!
+
     # Svc Account password
+
     # svc_account_passwd: insecure_password
+
     # -------------------------
-    
+
+
     # MessageQueuing
+
     # -------------------------
+
     mq_host = 'mq_host'
+
     mq_port = 5671
+
     mq_ssl = True
+
     mq_user = 'mq_user'
+
     mq_password = 'mq_password'
 
+
+
     # --------------------------
+
     # Elasticsearch Indexer Info
+
     # --------------------------
+
     es_host = '127.0.0.1'
+
     es_port = 9200
+
     es_ssl = False
+
     es_index = 'perception'
+
     es_direct = True
+
 
 PostgreSQL 8.4 and ^ is supported.
 
-Next install requirements:
+    Next install requirements:
 
-`pip install -r requirements`
+    `pip install -r requirements`
 
-Then run the migration:
+    Then run the migration:
 
-`alembic upgrade head`
+    `alembic upgrade head`
 
 
 There are two parts to this application.
