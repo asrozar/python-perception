@@ -3,7 +3,8 @@ from alembic import context
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 from logging.config import fileConfig
-from ...config import configuration as myconfig
+from perception import db_config, config as myconfig
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -23,12 +24,6 @@ target_metadata = None
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... config.
-
-db_config = {'drivername': myconfig.db_drivername,
-             'host': myconfig.db_host,
-             'database': myconfig.database,
-             'username': myconfig.db_username,
-             'password': myconfig.db_password}
 
 # build URL
 sqlalchemy_url = '%s://%s:%s@%s/%s' % (myconfig.db_drivername,
