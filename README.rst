@@ -8,10 +8,9 @@ network devices. Inventory information is indexed using Elasticsearch.
 First thing to do is edit the app/config/configuration.yml file. Either store it in `/etc/perception/configuration.yml`
 or set the `PERCEPTION_CONFIG` env variable.
 
-Example Configuration
+Example Configuration::
 
     # Database Info
-
     drivername: postgres
     host: localhost
     database: perception_db
@@ -19,52 +18,30 @@ Example Configuration
     password: perception_passwd
 
     # Application Info
-
     discovery_mode: passive
 
     # You should not use this
-
     # Setup PKI and stop being lazy!
-
     # Svc Account password
-
     # svc_account_passwd: insecure_password
-
     # -------------------------
-
 
     # MessageQueuing
-
     # -------------------------
-
-    mq_host = 'mq_host'
-
-    mq_port = 5671
-
-    mq_ssl = True
-
-    mq_user = 'mq_user'
-
-    mq_password = 'mq_password'
-
-
+    mq_host = 'localhost'
+    mq_port = 5672
+    mq_ssl = False
+    mq_user = 'guest'
+    mq_password = 'guest'
 
     # --------------------------
-
     # Elasticsearch Indexer Info
-
     # --------------------------
-
     es_host = '127.0.0.1'
-
     es_port = 9200
-
     es_ssl = False
-
     es_index = 'perception'
-
     es_direct = True
-
 
 PostgreSQL 8.4 and ^ is supported.
 
