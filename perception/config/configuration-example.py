@@ -14,8 +14,8 @@ timezone = 'US/Eastern'
 db_drivername = 'postgres'
 db_host = 'localhost'
 database = 'perceptiondb'
-db_username = 'perception'
-db_password = 'perception_password'
+db_username = 'perceptiondb_user'
+db_password = 'perceptiondb_user_password'
 
 # ----------------
 # Application Info
@@ -33,11 +33,11 @@ discovery_mode = 'passive'
 # MessageQueuing
 # -------------------------
 
-mq_host = 'mq_host'
-mq_port = 5671
-mq_ssl = True
-mq_user = 'mq_user'
-mq_password = 'mq_password'
+mq_host = 'localhost'
+mq_port = 5672
+mq_ssl = False
+mq_user = 'guest'
+mq_password = 'guest'
 
 # --------------------------
 # Elasticsearch Indexer Info
@@ -50,10 +50,10 @@ es_direct = True
 # -------------------
 # Splunk Indexer Info
 # -------------------
-splunk_indexer = True
+splunk_indexer = False
 splunk_host = 'splunk.host.local'
 splunk_username = 'splunk_user'
 splunk_password = 'should_setup_pki'
 splunk_api_port = 8089
-splink_index = 'index_name'
+splink_index = 'perception'
 
