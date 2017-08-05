@@ -5,7 +5,7 @@ Description=Start Perception Daemon service
 Type=oneshot
 ExecStart=/usr/bin/perceptiond start
 ExecStop=/usr/bin/perceptiond stop
-ExecStop=/usr/bin/perceptiond restart
+ExecRestart=/usr/bin/perceptiond restart
 RemainAfterExit=yes
 
 [Install]
