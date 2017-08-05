@@ -1,35 +1,7 @@
-import datetime
 from sqlalchemy.exc import IntegrityError
-from perception import es_add_document
-from perception import IOS_SHOW_ARP,\
-    IOS_TERMLEN0,\
-    IOS_SHOW_ADJACENCY,\
-    IOS_SHOW_CDP_DETAIL,\
-    IOS_SHOW_CAM, \
-    SHOW_OS, \
-    IOS_SHOWIPINTBR, \
-    IOS_RTR_SHOW_MODEL, \
-    IOS_RTR_SHOW_SERIALNUM, \
-    IOS_SHOW_LICS, \
-    IOS_SWITCH_SHOW_MODEL, \
-    IOS_SWITCH_SHOW_SERIALNUM,\
-    IOS_SHOW_LOCAL_CONNECTIONS,\
-    IOS_LAST_RESORT_SHOW_MODEL,\
-    HASH_PROMPT,\
-    GT_PROMPT, \
-    SSH_NEW_KEY, \
-    SSH_BAD_KEY, \
-    SSH_REFUSED, \
-    PASSWORD, \
-    PERMISSION_DENIED, \
-    SSH_OUTDATED_KEX, \
-    SSH_OUTDATED_PROTOCOL, \
-    config, \
-    nmap_tmp_dir, \
-    Session, \
-    system_uuid, \
-    hostname_lookup
-from perception.lib.active_discovery import RunNmap
+from perception.config import configuration as config
+from perception.shared.functions import get_product_uuid
+from perception.classes import active_discovery, esearch, network, sql
 from perception.database.models import RSInfrastructure,\
     RSAddr,\
     DiscoveryProtocolFinding,\
@@ -41,9 +13,59 @@ from subprocess import check_output, CalledProcessError
 from pexpect import spawnu, exceptions, TIMEOUT
 from re import search, sub
 import syslog
-import threading
 import time
 import json
+
+system_uuid = get_product_uuid()
+
+# ----------------
+# pexpect SSH info
+# ----------------
+SSH_NEW_KEY = '.Are you sure you want to continue connecting (yes/no)?'
+SSH_BAD_KEY = 'WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!'
+SSH_REFUSED = 'Connection refused'
+SSH_OUTDATED_KEX = '.no matching key exchange method found'
+SSH_OUTDATED_PROTOCOL = 'Protocol major versions differ: 2 vs. 1\\r\\r\\n'
+PASSWORD = '[P|p]assword'
+PERMISSION_DENIED = 'Permission denied, please try again.'
+
+# -----------
+# ssh prompts
+# -----------
+GT_PROMPT = '>$'
+HASH_PROMPT = '#$'
+
+# ----------------------
+# Cisco generic commands
+# ----------------------
+SHOWVER = 'show version'
+SHOW_OS = 'show version | include Software'
+
+# ------------------
+# Cisco IOS commands
+# ------------------
+IOS_TERMLEN0 = 'terminal length 0'
+IOS_SHOW_CDP_DETAIL = 'show cdp neighbors detail'
+IOS_SHOW_ADJACENCY = 'show adjacency'
+IOS_SHOW_LOCAL_CONNECTIONS = 'show ip route connected | in C'
+IOS_SHOW_ARP = 'show arp | exclude - | exclude Incomplete'
+IOS_SHOWIPINTBR = 'show ip int br | exclude unassigned'
+IOS_SHOW_CAM = 'show mac address-table | exclude All'
+IOS_SWITCH_SHOW_MODEL = 'show version | include Model number'
+IOS_RTR_SHOW_MODEL = 'show version | include \*'
+IOS_SWITCH_SHOW_SERIALNUM = 'show version | include System serial number'
+IOS_RTR_SHOW_SERIALNUM = 'show version | include Processor board ID'
+IOS_SHOW_LICS = 'show version | include License Level'
+IOS_LAST_RESORT_SHOW_MODEL = 'show version  | include (WS)'
+
+# ------------------
+# Cisco ASA commands
+# ------------------
+ASA_TERMPAGER0 = 'terminal pager 0'
+ASA_SHOWARP = 'show arp'
+ASA_SHOW_LOCAL_CONNECTIONS = 'show route | in C'
+ASA_SHOW_XLATE = 'show xlate'
+ASA_SHOW_CONN = 'show conn'
 
 
 def get_ssh_session(host, username):
@@ -755,7 +777,7 @@ class InterrogateRSI(object):
             seed):
         
         # Connect to the database
-        rsi_db_session = Session()
+        rsi_db_session = sql.Sql.create_session()
 
         interrogation = self.interrogate(username, ip_addr)
 
@@ -887,12 +909,12 @@ class InterrogateRSI(object):
         rsi_json_data = json.dumps(rsinfrastructure_dict)
 
         if config.es_direct:
-            es_add_document(config.es_host,
-                            config.es_port,
-                            config.es_index,
-                            'rsi',
-                            str(rsi.id),
-                            rsi_json_data)
+            esearch.Elasticsearch.add_document(config.es_host,
+                                               config.es_port,
+                                               config.es_index,
+                                               'rsi',
+                                               str(rsi.id),
+                                               rsi_json_data)
 
         if config.discovery_mode == 'active':
             for h in local_host_dict_list:
@@ -907,11 +929,11 @@ class InterrogateRSI(object):
                 except CalledProcessError:
                     mac_vendor = None
 
-                RunNmap(h['local_host_ip_addr'],
-                        h['local_host_mac_addr'],
-                        mac_vendor,
-                        '%s (%s)' % (rsi.ip_addr, rsi.host_name),
-                        h['local_host_adjacency_int'])
+                active_discovery.RunNmap(h['local_host_ip_addr'],
+                                         h['local_host_mac_addr'],
+                                         mac_vendor,
+                                         '%s (%s)' % (rsi.ip_addr, rsi.host_name),
+                                         h['local_host_adjacency_int'])
 
         rsi_db_session.close()
         return

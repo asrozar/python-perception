@@ -1,5 +1,5 @@
 import readline
-from perception import db_session, check_if_valid_address, system_uuid
+from perception.shared.functions import get_product_uuid
 from subprocess import call, Popen, PIPE
 from perception.database.models import OpenvasAdmin,\
     OpenvasLastUpdate,\
@@ -7,9 +7,13 @@ from perception.database.models import OpenvasAdmin,\
     SeedRouter,\
     RSInfrastructure, \
     DiscoveryProtocolFinding
-from send_message import SendToRabbitMQ
+from perception.classes import network
+from amqp import SendToRabbitMQ
 from sqlalchemy.exc import IntegrityError
 from socket import gethostbyaddr, herror
+from perception import db_session
+
+system_uuid = get_product_uuid()
 
 # -------------------------------------------------------------------------------
 # Local Classes
@@ -174,7 +178,7 @@ def add_seeds(seed_info):
     ipaddr = seed_info[0]
     username = seed_info[1]
 
-    if check_if_valid_address(ipaddr):
+    if network.Network.check_if_valid_address(ipaddr):
 
         try:
             hostname = gethostbyaddr(ipaddr)[0]

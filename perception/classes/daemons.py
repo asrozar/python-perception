@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-from perception import db_session, hostname_lookup, config, system_uuid, es_add_document
 from signal import SIGTERM
 from os import remove, path, kill, getpid, chdir, dup2, fork, setsid, umask
 from sqlalchemy.exc import OperationalError
@@ -17,8 +15,9 @@ from perception.database.models import OpenvasAdmin,\
     DoNotSeed, \
     HostWithBadSshKey, \
     HostUsingSshv1
-from perception.lib.infrastructure import InterrogateRSI
-from perception.lib.openvas import setup_openvas,\
+from perception.config import configuration as config
+from infrastructure import InterrogateRSI, sql, network, esearch
+from openvas import setup_openvas,\
     update_openvas_db,\
     migrate_rebuild_db
 from active_discovery import RunNmap, RunOpenVas, discover_live_hosts
@@ -31,6 +30,10 @@ import atexit
 import pika
 import ast
 import json
+from perception.shared.functions import get_product_uuid
+from perception import db_session
+
+system_uuid = get_product_uuid()
 
 
 class MessageBroker(object):
@@ -60,7 +63,6 @@ class MessageBroker(object):
             host_list = ast.literal_eval(host_list)
 
             for host in host_list:
-
                 RunNmap(host, None, None, None, None)
 
             ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -83,12 +85,12 @@ class MessageBroker(object):
         elif send_to_elasticsearch:
              send_to_elasticsearch = body.split('|')
              es_json_data = json.dumps(send_to_elasticsearch[3])
-             es_add_document(config.es_host,
-                             config.es_port,
-                             config.es_index,
-                             send_to_elasticsearch[1],
-                             send_to_elasticsearch[2],
-                             es_json_data)
+             esearch.Elasticsearch.add_document(config.es_host,
+                                                config.es_port,
+                                                config.es_index,
+                                                send_to_elasticsearch[1],
+                                                send_to_elasticsearch[2],
+                                                es_json_data)
 
     def run(self):
 
@@ -119,8 +121,7 @@ class MessageBroker(object):
 class OpenVasUpdater(object):
     def __init__(self, interval=5*60):
         self.interval = interval
-
-        t = threading.Thread(target=self.run, args=())
+        t = threading.Thread(target=self.run, args=db_session)
         t.start()
 
     def run(self):
@@ -264,7 +265,7 @@ class DiscoveryProtocolSpider(object):
                     if not rtr_list:
 
                         try:
-                            hostname = hostname_lookup(finding.ip_addr)
+                            hostname = network.Network.hostname_lookup(finding.ip_addr)
 
                             find_seed_account = db_session.query(SvcUser).filter(SvcUser.description == 'Seed Router Service Account').first()
 

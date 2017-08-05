@@ -1,7 +1,9 @@
 from os import makedirs, devnull, path, remove
 from subprocess import Popen, PIPE, call
-from perception.lib.xml_output_parser import parse_nmap_xml, parse_openvas_xml
-from perception.lib.openvas import create_port_list,\
+from perception.shared.functions import get_product_uuid
+from perception.shared.variables import nmap_tmp_dir
+from perception.classes.xml_output_parser import parse_nmap_xml, parse_openvas_xml
+from perception.classes.openvas import create_port_list,\
     create_config,\
     create_target,\
     create_task,\
@@ -15,7 +17,7 @@ from perception.lib.openvas import create_port_list,\
     get_report, \
     delete_port_list,\
     delete_config
-from perception import check_if_valid_cider, check_if_valid_address, nmap_tmp_dir
+from perception.classes.network import Network
 import threading
 import syslog
 import time
@@ -28,6 +30,7 @@ p = Popen(['which', 'nmap'],
           stdout=PIPE)
 
 nmap = p.stdout.read().strip().decode("utf-8")
+system_uuid = get_product_uuid()
 
 
 # TODO: remove duplicate code, follow DRY
@@ -39,8 +42,8 @@ def discover_live_hosts(scan_list):
         # find valid hosts and ports
         try:
 
-            cider = check_if_valid_cider(x)
-            ip_addr = check_if_valid_address(x)
+            cider = Network.check_if_valid_cider(x)
+            ip_addr = Network.check_if_valid_address(x)
 
             if ip_addr or cider:
                 addr_type = None
@@ -139,8 +142,8 @@ class RunNmap(object):
         # Kick off the nmap scan
         try:
 
-            cider = check_if_valid_cider(self.host)
-            ip_addr = check_if_valid_address(self.host)
+            cider = Network.check_if_valid_cider(self.host)
+            ip_addr = Network.check_if_valid_address(self.host)
 
             if ip_addr or cider:
                 addr_type = None

@@ -3,9 +3,12 @@ import syslog
 import json
 import time
 from socket import gethostbyaddr, herror
-from perception import get_or_create, Session, system_uuid, es_add_document, config
+from perception.config import configuration as config
 from perception.database.models import NmapHost, OpenVasVuln
-from send_message import SendToRabbitMQ
+from perception.classes import esearch, sql
+from perception.shared.functions import get_product_uuid
+
+system_uuid = get_product_uuid()
 
 
 def parse_openvas_xml(openvas_xml, *args):
@@ -110,7 +113,7 @@ def parse_openvas_xml(openvas_xml, *args):
     # parse get_reports_response
     if root.tag == 'get_reports_response':
 
-        openvas_db_session = Session()
+        openvas_db_session = sql.Sql.create_session()
 
         results = root.iter('result')
         vulnerability_list = list()
@@ -202,20 +205,20 @@ def parse_openvas_xml(openvas_xml, *args):
                          'openvas_vuln_scan_timestamp': int(time.time()),
                          'vulns': vulnerability_list}
 
-            openvas_vuln = get_or_create(openvas_db_session,
-                                         OpenVasVuln,
-                                         ip_addr=host_list[0],
-                                         perception_product_uuid=system_uuid)
+            openvas_vuln = sql.Sql.get_or_create(openvas_db_session,
+                                                 OpenVasVuln,
+                                                 ip_addr=host_list[0],
+                                                 perception_product_uuid=system_uuid)
 
             openvas_json_data = json.dumps(vuln_host)
 
             if config.es_direct:
-                es_add_document(config.es_host,
-                                config.es_port,
-                                config.es_index,
-                                'openvas',
-                                str(openvas_vuln.id),
-                                openvas_json_data)
+                esearch.Elasticsearch.add_document(config.es_host,
+                                                   config.es_port,
+                                                   config.es_index,
+                                                   'openvas',
+                                                   str(openvas_vuln.id),
+                                                   openvas_json_data)
 
             openvas_db_session.close()
             return 0
@@ -237,7 +240,7 @@ def parse_nmap_xml(nmap_results):
 
     try:
         #  Find all the hosts in the nmap scan
-        nmap_db_session = Session()
+        nmap_db_session = sql.Sql.create_session()
         host_list = list()
 
         for host in root.findall('host'):
@@ -510,20 +513,20 @@ def parse_nmap_xml(nmap_results):
                     ip_addr = ipv6
 
                 if ip_addr is not None:
-                    nmap_host = get_or_create(nmap_db_session,
-                                              NmapHost,
-                                              ip_addr=ip_addr,
-                                              perception_product_uuid=system_uuid)
+                    nmap_host = sql.Sql.get_or_create(nmap_db_session,
+                                                      NmapHost,
+                                                      ip_addr=ip_addr,
+                                                      perception_product_uuid=system_uuid)
 
                     nmap_json_data = json.dumps(host_dict)
 
                     if config.es_direct:
-                        es_add_document(config.es_host,
-                                        config.es_port,
-                                        config.es_index,
-                                        'nmap',
-                                        str(nmap_host.id),
-                                        nmap_json_data)
+                        esearch.Elasticsearch.add_document(config.es_host,
+                                                           config.es_port,
+                                                           config.es_index,
+                                                           'nmap',
+                                                           str(nmap_host.id),
+                                                           nmap_json_data)
 
         nmap_db_session.close()
         return host_list
