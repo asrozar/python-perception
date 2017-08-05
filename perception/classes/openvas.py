@@ -1,14 +1,15 @@
-from OpenSSL import crypto
 import datetime
+import syslog
+from OpenSSL import crypto
 from os import path, makedirs, system
 from subprocess import call
 from re import match, search
 from subprocess import check_output, CalledProcessError, PIPE
 from time import sleep
-from perception.lib.xml_output_parser import parse_openvas_xml
+from perception.classes.xml_output_parser import parse_openvas_xml
 from perception.database.models import OpenvasAdmin, OpenvasLastUpdate
-from perception import db_session, system_uuid
-import syslog
+from perception.shared.functions import get_product_uuid
+from perception import db_session
 
 redis_conf = '/etc/redis/redis.conf'
 port_regex = 's/^\(#.\)\?port.*$/port 0/'
@@ -18,6 +19,7 @@ cacert_pem = '/var/lib/openvas/CA/cacert.pem'
 servercert_pem = '/var/lib/openvas/CA/servercert.pem'
 clientkey_pem = '/var/lib/openvas/private/CA/clientkey.pem'
 clientcert_pem = '/var/lib/openvas/CA/clientcert.pem'
+system_uuid = get_product_uuid()
 
 
 def setup_openvas():
