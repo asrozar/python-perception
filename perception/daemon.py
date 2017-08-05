@@ -3,7 +3,7 @@ import sys
 from time import sleep
 
 from perception import db_session
-from perception.lib.daemon import PerceptionDaemon
+from perception.classes.daemons import PerceptionDaemon
 
 
 # Perception
