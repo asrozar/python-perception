@@ -74,7 +74,7 @@ then
             echo >> ${perceptiond};
             echo ${importsys} >> ${perceptiond};
             echo >> ${perceptiond};
-            echo "from perception.perceptiond import main" >> ${perceptiond};
+            echo "from perception.daemon import main" >> ${perceptiond};
             echo >> ${perceptiond};
             echo >> ${perceptiond};
             echo ${ifnamemain} >> ${perceptiond};
@@ -91,7 +91,7 @@ then
             echo >> ${perception_cli};
             echo ${importsys} >> ${perception_cli};
             echo >> ${perceptiond};
-            echo "from perception.perception_cli import main" >> ${perception_cli};
+            echo "from perception.shell import main" >> ${perception_cli};
             echo >> ${perception_cli};
             echo >> ${perception_cli};
             echo ${ifnamemain} >> ${perception_cli};
@@ -108,11 +108,7 @@ if [[ ! -f "/etc/systemd/system/perceptiond.service" ]];
             if [[ ! -f ${etc_perception}"configuration.py" ]]
                 then
                     cp ${perception_config}"configuration-example.py" ${etc_perception}"config/configuration.py"
-
-                    # TODO: how can I avoid this? Would rather this be 640
-                    # CLI needs the config, may need to move sensitive info somewhere else
-                    # or make cli use sudo???
-                    chmod 644 ${etc_perception}"config/configuration.py"
+                    chmod 640 ${etc_perception}"config/configuration.py"
             fi
 fi
 
@@ -125,6 +121,9 @@ case ${contained_input} in
         # apt-get install apt-transport-https
         # echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list
         # apt-get update && apt-get install -y elasticsearch rabbitmq-server openjdk-8-jdk
+        # edit elasticsearch config
+        # enable elasticsearch and rabbitmq
+        # run migration
 esac
 
 read -r -p "Would you like to use Perception CLI as the default shell when adduser is invoked? [Y/N]: " cli_input
