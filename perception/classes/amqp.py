@@ -1,4 +1,4 @@
-from perception import config
+from perception.config import configuration as config
 from pika import PlainCredentials, BlockingConnection, ConnectionParameters, BasicProperties, exceptions
 import threading
 import syslog
