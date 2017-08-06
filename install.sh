@@ -135,12 +135,12 @@ psql_func(){
 
 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add - >> ${install_log}
 apt-get install apt-transport-https -y >> ${install_log}
-echo ${es_pgp_key} >> -a /etc/apt/sources.list.d/elastic-5.x.list
+echo ${es_pgp_key} >> /etc/apt/sources.list.d/elastic-5.x.list
 apt-get update && apt-get install -y elasticsearch rabbitmq-server openjdk-8-jdk >> ${install_log}
 sed -i "s/#cluster.name: my-application/cluster.name: perception_cluster/" ${es_config} >> ${install_log}
 sed -i "s/#node.name: node-1/node.name: ${hostname}/" ${es_config} >> ${install_log}
-systemctl enable postgresql-server.service elasticsearch.service rabbitmq-server.service >> ${install_log}
-systemctl start postgresql-server.service elasticsearch.service rabbitmq-server.service >> ${install_log}
+systemctl enable postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
+systemctl start postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
 psql_func
 python run_migrations.py >> ${install_log}
 echo -e ${end_msg}
