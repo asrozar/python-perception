@@ -38,13 +38,14 @@ then
     exit 1
 fi
 
-# build the sdist package
+read -r -p "[!] Is this installation of Perception for a contained install? [Y/N]: " contained_input
+
 python setup.py sdist > ${install_log}
-chmod 666 ${install_log}
 
 if [ $? -eq 0 ];
 
 then
+    chmod 666 ${install_log}
     perception_zip=$(ls -1 dist | tr '\n' '\0' | xargs -0 -n 1 basename)
 
     # make sure pip2 is installed
@@ -104,44 +105,40 @@ then
             chmod +x ${perception_cli}
         fi
     fi
-fi
 
-if [[ ! -f "/etc/systemd/system/perceptiond.service" ]];
+    if [[ ! -f "/etc/systemd/system/perceptiond.service" ]];
+    then
+        cp ${perceptiond_service} "/etc/systemd/system/perceptiond.service" >> ${install_log}
+        if [[ ! -f ${etc_perception}"configuration.py" ]];
         then
-            cp ${perceptiond_service} "/etc/systemd/system/perceptiond.service" >> ${install_log}
-            if [[ ! -f ${etc_perception}"configuration.py" ]]
-                then
-                    cp ${perception_config}"configuration-example.py" ${etc_perception}"config/configuration.py" >> ${install_log}
-                    chmod 640 ${etc_perception}"config/configuration.py" >> ${install_log}
-            fi
-fi
+            cp ${perception_config}"configuration-example.py" ${etc_perception}"config/configuration.py" >> ${install_log}
+            chmod 640 ${etc_perception}"config/configuration.py" >> ${install_log}
+        fi
+    fi
 
-read -r -p "[!] Is this installation of Perception for a contained install? [Y/N]: " contained_input
-case ${contained_input} in
-    [nN][oO][nN])
+    case ${contained_input} in
+        [nN][oO][nN])
+        echo -e ${end_msg}
+        exit 0
+    esac
+
+    DBPASSWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+    wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add - >> ${install_log}
+    apt-get install apt-transport-https -y >> ${install_log}
+    echo ${es_pgp_key} >> /etc/apt/sources.list.d/elastic-5.x.list
+    apt-get update && apt-get install -y elasticsearch rabbitmq-server openjdk-8-jdk >> ${install_log}
+    sed -i "s/#cluster.name: my-application/cluster.name: perception_cluster/" ${es_config} >> ${install_log}
+    sed -i "s/#node.name: node-1/node.name: ${hostname}/" ${es_config} >> ${install_log}
+    systemctl enable postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
+    systemctl start postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
+    sed -i "s/perceptiondb_user_password/${DBPASSWD}/" ${etc_perception}"config/configuration.py" >> ${install_log}
+    python run_migrations.py ${DBPASSWD} >> ${install_log}
     echo -e ${end_msg}
     exit 0
-esac
 
-DBPASSWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-psql_func(){
-    su postgres
-    psql -c "CREATE DATABASE perceptiondb;" >> ${install_log}
-    psql -c "CREATE USER perceptiondb_user WITH PASSWORD '${DBPASSWD}';" >> ${install_log}
-    psql -c "ALTER DATABASE perceptiondb OWNER TO perceptiondb_user;" >> ${install_log}
-    sed -i "s/perceptiondb_user_password/${DBPASSWD}/" ${etc_perception}"config/configuration.py" >> ${install_log}
-    exit
-}
-
-wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add - >> ${install_log}
-apt-get install apt-transport-https -y >> ${install_log}
-echo ${es_pgp_key} >> /etc/apt/sources.list.d/elastic-5.x.list
-apt-get update && apt-get install -y elasticsearch rabbitmq-server openjdk-8-jdk >> ${install_log}
-sed -i "s/#cluster.name: my-application/cluster.name: perception_cluster/" ${es_config} >> ${install_log}
-sed -i "s/#node.name: node-1/node.name: ${hostname}/" ${es_config} >> ${install_log}
-systemctl enable postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
-systemctl start postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
-psql_func
-python run_migrations.py >> ${install_log}
-echo -e ${end_msg}
-exit 0
+elif [ $? -nq 0 ];
+then
+    echo "[!] The python-perception package did not install properly"
+    echo "[*] Please review the install log: ${install_log}"
+    exit 1
+fi
