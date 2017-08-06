@@ -47,13 +47,3 @@ es_port = 9200
 es_index = 'perception'
 es_direct = True
 
-# -------------------
-# Splunk Indexer Info
-# -------------------
-splunk_indexer = False
-splunk_host = 'splunk.host.local'
-splunk_username = 'splunk_user'
-splunk_password = 'should_setup_pki'
-splunk_api_port = 8089
-splink_index = 'perception'
-
