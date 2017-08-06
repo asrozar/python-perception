@@ -136,7 +136,7 @@ then
     echo -e ${end_msg}
     exit 0
 
-elif [ $? -nq 0 ];
+elif [ $? -ne 0 ];
 then
     echo "[!] The python-perception package did not install properly"
     echo "[*] Please review the install log: ${install_log}"
