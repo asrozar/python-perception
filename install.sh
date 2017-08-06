@@ -38,8 +38,6 @@ then
     exit 1
 fi
 
-read -r -p "[!] Is this installation of Perception for a contained install? [Y/N]: " contained_input
-
 # build the sdist package
 python setup.py sdist > ${install_log}
 chmod 666 ${install_log}
@@ -118,11 +116,11 @@ if [[ ! -f "/etc/systemd/system/perceptiond.service" ]];
             fi
 fi
 
+read -r -p "[!] Is this installation of Perception for a contained install? [Y/N]: " contained_input
 case ${contained_input} in
     [nN][oO][nN])
     echo -e ${end_msg}
     exit 0
-
 esac
 
 DBPASSWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
