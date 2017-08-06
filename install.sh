@@ -31,7 +31,6 @@ perception_cli="/usr/bin/perception_cli"
 perceptiond_service="perceptiond.service"
 end_msg="\n[*] Perception installation is complete\n[*] Complete the configuration at /etc/perception/config/configuration.py\n[*] To start the Perception Daemon on boot type \"systemctl enable perceptiond.service\""
 
-# os check
 if [[ ! "$kernal" =~ "kali4" ]];
 then
     echo ${unsupported}
@@ -40,6 +39,7 @@ fi
 
 read -r -p "[!] Is this installation of Perception for a contained install? [Y/N]: " contained_input
 
+apt-get install -y python-setuptools python-alembic > ${install_log}
 python setup.py sdist > ${install_log}
 
 if [ $? -eq 0 ];
