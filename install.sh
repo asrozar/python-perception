@@ -26,6 +26,7 @@ ifnamemain="if __name__ == \"__main__\":"
 py_sysexit="    sys.exit(main())"
 etc_perception="/etc/perception/"
 perception_config="/usr/local/lib/python2.7/dist-packages/perception/config/"
+postgresql_config="/etc/postgresql/9.6/main/postgresql.conf"
 perceptiond="/usr/bin/perceptiond"
 perception_cli="/usr/bin/perception_cli"
 perceptiond_service="perceptiond.service"
@@ -129,6 +130,7 @@ then
     apt-get update && apt-get install -y elasticsearch rabbitmq-server openjdk-8-jdk >> ${install_log}
     sed -i "s/#cluster.name: my-application/cluster.name: perception_cluster/" ${es_config} >> ${install_log}
     sed -i "s/#node.name: node-1/node.name: ${hostname}/" ${es_config} >> ${install_log}
+    sed -i "s/port = 5435/port = 5432/" ${postgresql_config} >> ${install_log}
     systemctl enable postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
     systemctl start postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
     sed -i "s/perceptiondb_user_password/${DBPASSWD}/" ${etc_perception}"config/configuration.py" >> ${install_log}
