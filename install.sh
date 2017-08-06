@@ -134,6 +134,7 @@ then
     systemctl enable postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
     systemctl start postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
     sed -i "s/perceptiondb_user_password/${DBPASSWD}/" ${etc_perception}"config/configuration.py" >> ${install_log}
+    su postgres -c "createdb perceptiondb"
     python run_migrations.py ${DBPASSWD} >> ${install_log}
     echo -e ${end_msg}
     exit 0

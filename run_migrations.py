@@ -4,14 +4,11 @@ from alembic import command
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 import sys
-import subprocess
 
 
 def main():
 
     perceptiondb_user_password = sys.argv[1]
-
-    subprocess.call(['createdb', '-U', 'postgres', 'perceptiondb'])
     engine = create_engine('postgresql://postgres@localhost/perceptiondb')
 
     conn = engine.connect()
