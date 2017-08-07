@@ -2,9 +2,8 @@ import datetime
 import syslog
 from OpenSSL import crypto
 from os import path, makedirs, system
-from subprocess import call
+from subprocess import call, check_output, CalledProcessError, PIPE
 from re import match, search
-from subprocess import check_output, CalledProcessError, PIPE
 from time import sleep
 from perception.classes.xml_output_parser import parse_openvas_xml
 from perception.database.models import OpenvasAdmin, OpenvasLastUpdate
@@ -146,13 +145,13 @@ def verify_certificate_chain(cert_str, trusted_certs):
 
 
 def update_openvas_db():
-    greenbone_nvt_sync = call(['greenbone-nvt-sync'], stdout=PIPE)
+    greenbone_nvt_sync = call(['greenbone-nvt-sync'])
 
     if greenbone_nvt_sync == 0:
-        greenbone_scapdata_sync = call(['greenbone-scapdata-sync'], stdout=PIPE)
+        greenbone_scapdata_sync = call(['greenbone-scapdata-sync'])
 
         if greenbone_scapdata_sync == 0:
-            greenbone_certdata_sync = call(['greenbone-certdata-sync'], stdout=PIPE)
+            greenbone_certdata_sync = call(['greenbone-certdata-sync'])
 
             if greenbone_certdata_sync == 0:
                 return 0
@@ -172,29 +171,29 @@ def update_openvas_db():
 
 def migrate_rebuild_db():
     # stop services and migrate database
-    stop_manager = call(['service', 'openvas-manager', 'stop'], stdout=PIPE)
+    stop_manager = call(['service', 'openvas-manager', 'stop'])
 
     if stop_manager == 0:
-        openvas_stop_scanner = call(['service', 'openvas-scanner', 'stop'], stdout=PIPE)
+        openvas_stop_scanner = call(['service', 'openvas-scanner', 'stop'])
 
         if openvas_stop_scanner == 0:
-            openvasssd = call(['openvassd'], stdout=PIPE)
+            openvasssd = call(['openvassd'])
 
             if stop_manager == 0:
-                openvasmd_migrate = call(['openvasmd', '--migrate'], stdout=PIPE)
+                openvasmd_migrate = call(['openvasmd', '--migrate'])
 
                 if openvasmd_migrate == 0:
                     openvasmd_rebuild = call(['openvasmd', '--rebuild'])
 
                     if openvasmd_rebuild == 0:
-                        killall_openvas = call(['killall', 'openvassd'], stdout=PIPE)
+                        killall_openvas = call(['killall', 'openvassd'])
                         sleep(15)
 
                         if killall_openvas == 0:
-                            start_openvas_scanner = call(['systemctl', 'start', 'openvas-scanner'], stdout=PIPE)
+                            start_openvas_scanner = call(['systemctl', 'start', 'openvas-scanner'])
 
                             if start_openvas_scanner == 0:
-                                start_openvas_manager = call(['systemctl', 'start', 'openvas-manager'], stdout=PIPE)
+                                start_openvas_manager = call(['systemctl', 'start', 'openvas-manager'])
 
                                 if start_openvas_manager == 0:
                                     return 0
