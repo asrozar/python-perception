@@ -38,7 +38,7 @@ then
     exit 1
 fi
 
-read -r -p "[!] Is this installation of Perception for a contained install? [Y/N]: " contained_input
+read -r -p "[!] Is this installation of Perception for a standalone install? [Y/N]: " contained_input
 
 apt-get install -y python-setuptools python-alembic > ${install_log}
 python setup.py sdist > ${install_log}
