@@ -1,3 +1,5 @@
+# TODO: fix in 0.6 (Make this a class)
+
 import datetime
 import syslog
 from OpenSSL import crypto
