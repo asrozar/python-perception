@@ -134,8 +134,11 @@ then
     systemctl enable postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
     systemctl start postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
     sed -i "s/perceptiondb_user_password/${DBPASSWD}/" ${etc_perception}"config/configuration.py" >> ${install_log}
-    su postgres -c "createdb perceptiondb"
-    python run_migrations.py ${DBPASSWD} >> ${install_log}
+    su postgres bash -c "psql -c \"CREATE USER perceptiondb_user WITH PASSWORD '${DBPASSWD}';\""
+    su postgres -c "createdb perceptiondb --owner=perceptiondb_user"
+    cd "/usr/local/lib/python2.7/dist-packages/perception/database/"
+    alembic upgrade head
+    cd ~/
     echo -e ${end_msg}
     exit 0
 
