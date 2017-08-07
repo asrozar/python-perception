@@ -96,9 +96,9 @@ def setup_openvas():
 
     db_session.commit()
 
-    call(['systemctl', 'enable', 'openvas-scanner'])
+    call(['systemctl', 'enable', 'openvas-scanner.service'])
 
-    call(['systemctl', 'enable', 'openvas-scanner'])
+    call(['systemctl', 'enable', 'openvas-manager.service'])
 
 
 def check_redis_unixsocket_conf(conf):
