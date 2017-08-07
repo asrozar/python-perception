@@ -30,7 +30,7 @@ def upgrade():
                     sa.Column('ip_addr', postgresql.INET),
                     sa.Column('platform', sa.Text),
                     sa.Column('capabilities', sa.Text),
-                    sa.Column('created_at', sa.TIMESTAMP, default=_get_date))
+                    sa.Column('created_at', sa.TIMESTAMP(timezone=True), default=_get_date))
 
 
 def downgrade():

@@ -28,8 +28,8 @@ def upgrade():
                     sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('username', sa.String, nullable=False, unique=True),
                     sa.Column('description', sa.String),
-                    sa.Column('created_at', sa.TIMESTAMP, default=_get_date),
-                    sa.Column('updated_at', sa.TIMESTAMP, default=_get_date)),
+                    sa.Column('created_at', sa.TIMESTAMP(timezone=True), default=_get_date),
+                    sa.Column('updated_at', sa.TIMESTAMP(timezone=True), default=_get_date)),
 
 
 def downgrade():

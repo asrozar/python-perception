@@ -29,7 +29,7 @@ def upgrade():
                     sa.Column('ip_addr', postgresql.INET, unique=True, nullable=False),
                     sa.Column('host_name', sa.Text),
                     sa.Column('svc_user_id', sa.Integer, sa.ForeignKey('svc_users.id', ondelete='cascade')),
-                    sa.Column('created_at', sa.TIMESTAMP, default=_get_date))
+                    sa.Column('created_at', sa.TIMESTAMP(timezone=True), default=_get_date))
 
 
 def downgrade():

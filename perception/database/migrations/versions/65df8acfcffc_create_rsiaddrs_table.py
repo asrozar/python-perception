@@ -27,8 +27,8 @@ def upgrade():
                     sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
                     sa.Column('rsinfrastructure_id', sa.Integer, sa.ForeignKey('rsinfrastructure.id'), nullable=False),
                     sa.Column('ip_addr', postgresql.INET),
-                    sa.Column('created_at', sa.TIMESTAMP, default=_get_date),
-                    sa.Column('updated_at', sa.TIMESTAMP, default=_get_date))
+                    sa.Column('created_at', sa.TIMESTAMP(timezone=True), default=_get_date),
+                    sa.Column('updated_at', sa.TIMESTAMP(timezone=True), default=_get_date))
 
 
 def downgrade():
