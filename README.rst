@@ -53,50 +53,50 @@ There are two parts to this application.
     be intuitive for network admins that are familiar with IOS type cli's. There is also show commands
     to see current infrastructure and locally connected hosts.
     
-    `/usr/bin/perception_cli`
+    /usr/bin/perception_cli
 
 2) Perception Daemon::
 
-    `sudo /usr/bin/perceptiond start | stop | restart`
+    sudo /usr/bin/perceptiond start | stop | restart
 
     The Daemon manages three process. The SeedStarter(), DiscoveryProtocolSpider(), and RSInventoryUpdater().
     It is required that the service accounts used for for Perception are configured to use
-    `SSH public key authentication`. You can find configuration examples here:[NSRC_ORG](https://nsrc.org/workshops/2016/apricot2016/raw-attachment/wiki/Track5Wireless/cisco-ssh-auth.htm)
+    SSH public key authentication. You can find configuration examples here:[NSRC_ORG](https://nsrc.org/workshops/2016/apricot2016/raw-attachment/wiki/Track5Wireless/cisco-ssh-auth.htm)
     and here: [Cisco Support Forum](https://supportforums.cisco.com/document/110946/ssh-using-public-key-authentication-ios-and-big-outputs).
     
-    `SeedStarter()` checks for new seed routers To interrogate.
+    SeedStarter() checks for new seed routers To interrogate.
     
     The following example show how to add a seed router in the Perception CLI:
     
-    `hostname> config`
+    hostname> config
     
-    `hostname(config)# seeds`
+    hostname(config)# seeds
     
-    `hostname(config/seeds)# add 10.1.1.1 info_svc_account`
+    hostname(config/seeds)# add 10.1.1.1 info_svc_account
     
     The interrogation of the network devices yields information about locally connected hosts, subnets
     arp-cache tables and discovery protocol information. If discovery mode is configured as "active" [default=passive], during 
-    interrogation the local hosts will be port scanned using `nmap -sS -sV host_ip`.
+    interrogation the local hosts will be port scanned using nmap -sS -sV host_ip.
     
-    `DiscoveryProtocolSpider()` checks the DiscoveryProtocolFinding table for new network devices to
+    DiscoveryProtocolSpider() checks the DiscoveryProtocolFinding table for new network devices to
     interrogate and adds them to the SeedRouter table.
     
-    `RSInventoryUpdater()` is the process to re-interrogate the network devices and keep the inventory up
+    RSInventoryUpdater() is the process to re-interrogate the network devices and keep the inventory up
     to date.
     
     Show commands:
     
-    `show infrastructure` Displays the discovered network devices.
+    show infrastructure Displays the discovered network devices.
     
-    `show seeds` Displays the current devices.
+    show seeds Displays the current devices.
     
     Run commands:
     
-    `hostname> run discovery on 172.16.1.10`
+    hostname> run discovery on 172.16.1.10
     
-    `hostname> run discovery on 172.16.1.0/24`
+    hostname> run discovery on 172.16.1.0/24
     
-    `hostname> run vuln_scan on 172.16.1.10`
+    hostname> run vuln_scan on 172.16.1.10
 
-    `hostname> run vuln_scan on 172.16.1.0/24`
+    hostname> run vuln_scan on 172.16.1.0/24
 
