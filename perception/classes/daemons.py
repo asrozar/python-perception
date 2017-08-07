@@ -142,7 +142,7 @@ class OpenVasUpdater(object):
 
                 if openvas_admin is None:
                     syslog.syslog(syslog.LOG_INFO,
-                                  'OpenVasUpdater info: OpenVas needs to be configured, this may take 30 minutes or more')
+                                  'OpenVasUpdater info: OpenVas needs to be configured, this may take up to an hour')
                     ov_setup = setup_openvas()
 
                     if ov_setup == 99:
