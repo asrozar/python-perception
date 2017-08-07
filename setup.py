@@ -37,7 +37,5 @@ setup(
                       'pexpect',
                       'pika',
                       'xlsxwriter',
-                      'splunk-sdk',
-                      'elasticsearch',
                       'pytz',
                       ])
