@@ -96,13 +96,9 @@ def setup_openvas():
 
     db_session.commit()
 
-    enable_openvas_manager = call(['systemctl', 'enable', 'openvas-scanner'])
-    if enable_openvas_manager != 0:
-        syslog.syslog(syslog.LOG_INFO, 'OpenVas Setup error: Could not enable openvas-scanner as a startup service')
+    call(['systemctl', 'enable', 'openvas-scanner'])
 
-    enable_openvas_scanner = call(['systemctl', 'enable', 'openvas-scanner'])
-    if enable_openvas_scanner != 0:
-        syslog.syslog(syslog.LOG_INFO, 'OpenVas Setup error: Could not enable openvas-scanner as a startup service')
+    call(['systemctl', 'enable', 'openvas-scanner'])
 
 
 def check_redis_unixsocket_conf(conf):
