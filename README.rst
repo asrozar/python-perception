@@ -8,7 +8,7 @@ Run the Install::
 
     ./install.sh
 
-Edit the /etc/perception/config/configuration.yml file.
+Edit the /etc/perception/config/configuration.py file.
 
 Example Configuration::
 
