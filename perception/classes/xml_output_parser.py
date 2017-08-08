@@ -1,3 +1,5 @@
+# TODO: fix in 0.6 (Make this a class)
+
 import xml.etree.ElementTree as ET
 import syslog
 import json

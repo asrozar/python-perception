@@ -1,3 +1,5 @@
+# TODO: fix in 0.6 (Make this a class)
+
 import datetime
 import syslog
 from OpenSSL import crypto
@@ -342,7 +344,6 @@ def create_target(targets_name, openvas_user_username, openvas_user_password, ho
                         '<port_list id=\'%s\'/>' \
                         '</create_target>' % (targets_name, host_ip, port_list_id)
 
-
     create_target_response = check_output(['omp',
                                            '--port=9390',
                                            '--host=localhost',
@@ -362,42 +363,42 @@ def create_target(targets_name, openvas_user_username, openvas_user_password, ho
         return create_target_response_id.group(0)
 
 
-#def create_targets_with_smb_lsc(targets_name, openvas_user_username, openvas_user_password, lsc_id, smb_scan_list):
-#    create_target_cli = '<create_target>' \
-#                        '<name>%s</name>' \
-#                        '<hosts>%s</hosts>' \
-#                        '<smb_lsc_credential id="%s"/>' \
-#                        '</create_target>' % (targets_name, ', '.join(smb_scan_list), lsc_id)
+def create_targets_with_smb_lsc(targets_name, openvas_user_username, openvas_user_password, lsc_id, smb_scan_list):
+    create_target_cli = '<create_target>' \
+                        '<name>%s</name>' \
+                        '<hosts>%s</hosts>' \
+                        '<smb_lsc_credential id="%s"/>' \
+                        '</create_target>' % (targets_name, ', '.join(smb_scan_list), lsc_id)
 
-#    create_target_response = check_output(['omp',
-#                                           '--port=9390',
-#                                           '--host=localhost',
-#                                           '--username=%s' % openvas_user_username,
-#                                           '--password=%s' % openvas_user_password,
-#                                           '--xml=%s' % create_target_cli]).decode()
+    create_target_response = check_output(['omp',
+                                           '--port=9390',
+                                           '--host=localhost',
+                                           '--username=%s' % openvas_user_username,
+                                           '--password=%s' % openvas_user_password,
+                                           '--xml=%s' % create_target_cli]).decode()
 
-#    create_target_response_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', create_target_response).group(0)
+    create_target_response_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', create_target_response).group(0)
 
-#    return create_target_response_id
+    return create_target_response_id
 
 
-#def create_targets_with_ssh_lsc(targets_name, openvas_user_username, openvas_user_password, lsc_id, ssh_scan_list):
-#    create_target_cli = '<create_target>' \
-#                        '<name>%s</name>' \
-#                        '<hosts>%s</hosts>' \
-#                        '<ssh_lsc_credential id="%s"/>' \
-#                        '</create_target>' % (targets_name, ', '.join(ssh_scan_list), lsc_id)
+def create_targets_with_ssh_lsc(targets_name, openvas_user_username, openvas_user_password, lsc_id, ssh_scan_list):
+    create_target_cli = '<create_target>' \
+                        '<name>%s</name>' \
+                        '<hosts>%s</hosts>' \
+                        '<ssh_lsc_credential id="%s"/>' \
+                        '</create_target>' % (targets_name, ', '.join(ssh_scan_list), lsc_id)
 
-#    create_target_response = check_output(['omp',
-#                                           '--port=9390',
-#                                           '--host=localhost',
-#                                           '--username=%s' % openvas_user_username,
-#                                           '--password=%s' % openvas_user_password,
-#                                           '--xml=%s' % create_target_cli]).decode()
+    create_target_response = check_output(['omp',
+                                           '--port=9390',
+                                           '--host=localhost',
+                                           '--username=%s' % openvas_user_username,
+                                           '--password=%s' % openvas_user_password,
+                                           '--xml=%s' % create_target_cli]).decode()
 
-#    create_target_response_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', create_target_response).group(0)
+    create_target_response_id = search(r'\w+[-]\w+[-]\w+[-]\w+[-]\w+', create_target_response).group(0)
 
-#    return create_target_response_id
+    return create_target_response_id
 
 
 def create_task(task_name, target_id, config_id, openvas_user_username, openvas_user_password):
@@ -428,36 +429,36 @@ def create_task(task_name, target_id, config_id, openvas_user_username, openvas_
         return create_task_response_id.group(0)
 
 
-#def create_lsc_credential(name, login, password, openvas_user_username, openvas_user_password):
+def create_lsc_credential(name, login, password, openvas_user_username, openvas_user_password):
 
-#    create_lsc_credential_cli = '<create_lsc_credential>' \
-#                                '<name>%s</name>' \
-#                                '<login>%s</login>' \
-#                                '<password>%s</password>' \
-#                                '<comment></comment>' \
-#                                '</create_lsc_credential>' % (name, login, password)
+    create_lsc_credential_cli = '<create_lsc_credential>' \
+                                '<name>%s</name>' \
+                                '<login>%s</login>' \
+                                '<password>%s</password>' \
+                                '<comment></comment>' \
+                                '</create_lsc_credential>' % (name, login, password)
 
-#    create_lsc_credential_cli_response = check_output(['omp',
-#                                                       '--port=9390',
-#                                                       '--host=localhost',
-#                                                       '--username=%s' % openvas_user_username,
-#                                                       '--password=%s' % openvas_user_password,
-#                                                       '--xml=%s' % create_lsc_credential_cli]).decode()
+    create_lsc_credential_cli_response = check_output(['omp',
+                                                       '--port=9390',
+                                                       '--host=localhost',
+                                                       '--username=%s' % openvas_user_username,
+                                                       '--password=%s' % openvas_user_password,
+                                                       '--xml=%s' % create_lsc_credential_cli]).decode()
 
-#    return parse_openvas_xml(create_lsc_credential_cli_response)
+    return parse_openvas_xml(create_lsc_credential_cli_response)
 
 
-#def get_lsc_crdentials(openvas_user_username, openvas_user_password):
-#    get_lsc_credential_cli = '<get_lsc_credentials/>'
+def get_lsc_crdentials(openvas_user_username, openvas_user_password):
+    get_lsc_credential_cli = '<get_lsc_credentials/>'
 
-#    get_lsc_credential_cli_response = check_output(['omp',
-#                                                    '--port=9390',
-#                                                    '--host=localhost',
-#                                                    '--username=%s' % openvas_user_username,
-#                                                    '--password=%s' % openvas_user_password,
-#                                                    '--xml=%s' % get_lsc_credential_cli]).decode()
+    get_lsc_credential_cli_response = check_output(['omp',
+                                                    '--port=9390',
+                                                    '--host=localhost',
+                                                    '--username=%s' % openvas_user_username,
+                                                    '--password=%s' % openvas_user_password,
+                                                    '--xml=%s' % get_lsc_credential_cli]).decode()
 
-#    return parse_openvas_xml(get_lsc_credential_cli_response)
+    return parse_openvas_xml(get_lsc_credential_cli_response)
 
 
 def start_task(task_id, openvas_user_username, openvas_user_password):
