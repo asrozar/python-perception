@@ -126,7 +126,7 @@ def get_ssh_session(host, username):
             elif s == 4:
                 return 97, ''
             elif s == 5:
-                if config.svc_account_passwd is not None:
+                try:
                     child.sendline(config.svc_account_passwd)
                     s = child.expect([TIMEOUT,
                                       unicode(SSH_REFUSED),
@@ -146,7 +146,7 @@ def get_ssh_session(host, username):
                         return child, GT_PROMPT
                     elif s == 5:
                         return child, HASH_PROMPT
-                else:
+                except AttributeError:
                     syslog.syslog(syslog.LOG_INFO, 'Interrogation error: Password requested, none set.')
                     return 99, ''
 
@@ -156,7 +156,7 @@ def get_ssh_session(host, username):
                 return s, HASH_PROMPT
 
         elif s == 3:
-            if config.svc_account_passwd is not None:
+            try:
                 child.sendline(config.svc_account_passwd)
                 s = child.expect([TIMEOUT,
                                   unicode(SSH_REFUSED),
@@ -176,7 +176,7 @@ def get_ssh_session(host, username):
                     return child, GT_PROMPT
                 elif s == 5:
                     return child, HASH_PROMPT
-            else:
+            except AttributeError:
                 syslog.syslog(syslog.LOG_INFO, 'Interrogation error: Password requested, none set.')
                 return 99, ''
 
@@ -242,7 +242,7 @@ def get_ssh_session(host, username):
                 elif s == 4:
                     return 97, ''
                 elif s == 5:
-                    if config.svc_account_passwd is not None:
+                    try:
                         child.sendline(config.svc_account_passwd)
                         s = child.expect([TIMEOUT,
                                           unicode(SSH_REFUSED),
@@ -262,7 +262,7 @@ def get_ssh_session(host, username):
                             return child, GT_PROMPT
                         elif s == 5:
                             return child, HASH_PROMPT
-                    else:
+                    except AttributeError:
                         syslog.syslog(syslog.LOG_INFO, 'Interrogation error: Password requested, none set.')
                         return 99, ''
 
@@ -272,7 +272,7 @@ def get_ssh_session(host, username):
                     return s, HASH_PROMPT
 
             elif s == 3:
-                if config.svc_account_passwd is not None:
+                try:
                     child.sendline(config.svc_account_passwd)
                     s = child.expect([TIMEOUT,
                                       unicode(SSH_REFUSED),
@@ -292,7 +292,7 @@ def get_ssh_session(host, username):
                         return child, GT_PROMPT
                     elif s == 5:
                         return child, HASH_PROMPT
-                else:
+                except AttributeError:
                     syslog.syslog(syslog.LOG_INFO, 'Interrogation error: Password requested, none set.')
                     return 99, ''
 
@@ -309,7 +309,7 @@ def get_ssh_session(host, username):
         elif s == 5:
             return 97, ''
         elif s == 6:
-            if config.svc_account_passwd is not None:
+            try:
                 child.sendline(config.svc_account_passwd)
                 s = child.expect([TIMEOUT,
                                   unicode(SSH_REFUSED),
@@ -329,7 +329,7 @@ def get_ssh_session(host, username):
                     return child, GT_PROMPT
                 elif s == 5:
                     return child, HASH_PROMPT
-            else:
+            except AttributeError:
                 syslog.syslog(syslog.LOG_INFO, 'Interrogation error: Password requested, none set.')
                 return 99, ''
 
@@ -344,7 +344,7 @@ def get_ssh_session(host, username):
 
     elif s == 6:
         # using password not PKI
-        if config.svc_account_passwd is not None:
+        try:
             child.sendline(config.svc_account_passwd)
             s = child.expect([TIMEOUT,
                               unicode(SSH_REFUSED),
@@ -364,7 +364,7 @@ def get_ssh_session(host, username):
                 return child, GT_PROMPT
             elif s == 5:
                 return child, HASH_PROMPT
-        else:
+        except AttributeError:
             syslog.syslog(syslog.LOG_INFO, 'Interrogation error: Password requested, none set.')
             return 99, ''
 
