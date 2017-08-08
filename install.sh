@@ -131,8 +131,8 @@ then
     sed -i "s/#cluster.name: my-application/cluster.name: perception_cluster/" ${es_config} >> ${install_log}
     sed -i "s/#node.name: node-1/node.name: ${hostname}/" ${es_config} >> ${install_log}
     sed -i "s/port = 5435/port = 5432/" ${postgresql_config} >> ${install_log}
-    systemctl enable postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
-    systemctl start postgresql.service elasticsearch.service rabbitmq-server.service >> ${install_log}
+    systemctl enable postgresql.service elasticsearch.service rabbitmq-server.service ntp.service >> ${install_log}
+    systemctl start postgresql.service elasticsearch.service rabbitmq-server.service ntp.service >> ${install_log}
     sed -i "s/perceptiondb_user_password/${DBPASSWD}/" ${etc_perception}"config/configuration.py" >> ${install_log}
     su postgres bash -c "psql -c \"CREATE USER perceptiondb_user WITH PASSWORD '${DBPASSWD}';\""
     su postgres -c "createdb perceptiondb --owner=perceptiondb_user"
