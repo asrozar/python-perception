@@ -26,7 +26,7 @@ def upgrade():
     op.create_table('openvas_admin',
                     sa.Column('id', sa.Integer, primary_key=True, nullable=False),
                     sa.Column('perception_product_uuid', postgresql.UUID, nullable=False),
-                    sa.Column('username', sa.Text, nullable=False, unique=True),
+                    sa.Column('username', sa.Text, nullable=False),
                     sa.Column('password', postgresql.UUID, nullable=False),
                     sa.Column('created_at', sa.TIMESTAMP(timezone=True), default=_get_date),
                     sa.Column('updated_at', sa.TIMESTAMP(timezone=True), default=_get_date))
