@@ -86,7 +86,7 @@ def setup_openvas():
     try:
         makedirs('/var/lib/openvas/gnupg')
     except OSError:
-        ''
+        pass
 
     add_user = OpenvasAdmin(perception_product_uuid=system_uuid,
                             username='perception_admin',
