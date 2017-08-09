@@ -32,6 +32,28 @@ perception_cli="/usr/bin/perception_cli"
 perceptiond_service="perceptiond.service"
 end_msg="\n[*] Perception installation is complete\n[*] Complete the configuration at /etc/perception/config/configuration.py\n[*] To start the Perception Daemon on boot type \"systemctl enable perceptiond.service\""
 
+standalone_install(){
+DBPASSWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add - >> ${install_log}
+apt-get install apt-transport-https -y >> ${install_log}
+echo ${es_pgp_key} >> /etc/apt/sources.list.d/elastic-5.x.list
+apt-get update && apt-get install -y elasticsearch rabbitmq-server openjdk-8-jdk >> ${install_log}
+sed -i "s/#cluster.name: my-application/cluster.name: perception_cluster/" ${es_config} >> ${install_log}
+sed -i "s/#node.name: node-1/node.name: ${hostname}/" ${es_config} >> ${install_log}
+sed -i "s/port = 5435/port = 5432/" ${postgresql_config} >> ${install_log}
+systemctl enable postgresql.service elasticsearch.service rabbitmq-server.service ntp.service >> ${install_log}
+systemctl start postgresql.service elasticsearch.service rabbitmq-server.service ntp.service >> ${install_log}
+sed -i "s/perceptiondb_user_password/${DBPASSWD}/" ${etc_perception}"config/configuration.py" >> ${install_log}
+su postgres bash -c "psql -c \"CREATE USER perceptiondb_user WITH PASSWORD '${DBPASSWD}';\""
+su postgres -c "createdb perceptiondb --owner=perceptiondb_user"
+cd "/usr/local/lib/python2.7/dist-packages/perception/database/"
+alembic upgrade head
+cd ~/
+echo -e ${end_msg}
+exit 0
+}
+
+
 if [[ ! "$kernal" =~ "kali4" ]];
 then
     echo ${unsupported}
@@ -118,29 +140,28 @@ then
     fi
 
     case ${contained_input} in
-        [nN][oO][nN])
+        [nN][oO])
         echo -e ${end_msg}
         exit 0
-    esac
+        ;;
 
-    DBPASSWD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
-    wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add - >> ${install_log}
-    apt-get install apt-transport-https -y >> ${install_log}
-    echo ${es_pgp_key} >> /etc/apt/sources.list.d/elastic-5.x.list
-    apt-get update && apt-get install -y elasticsearch rabbitmq-server openjdk-8-jdk >> ${install_log}
-    sed -i "s/#cluster.name: my-application/cluster.name: perception_cluster/" ${es_config} >> ${install_log}
-    sed -i "s/#node.name: node-1/node.name: ${hostname}/" ${es_config} >> ${install_log}
-    sed -i "s/port = 5435/port = 5432/" ${postgresql_config} >> ${install_log}
-    systemctl enable postgresql.service elasticsearch.service rabbitmq-server.service ntp.service >> ${install_log}
-    systemctl start postgresql.service elasticsearch.service rabbitmq-server.service ntp.service >> ${install_log}
-    sed -i "s/perceptiondb_user_password/${DBPASSWD}/" ${etc_perception}"config/configuration.py" >> ${install_log}
-    su postgres bash -c "psql -c \"CREATE USER perceptiondb_user WITH PASSWORD '${DBPASSWD}';\""
-    su postgres -c "createdb perceptiondb --owner=perceptiondb_user"
-    cd "/usr/local/lib/python2.7/dist-packages/perception/database/"
-    alembic upgrade head
-    cd ~/
-    echo -e ${end_msg}
-    exit 0
+        [nN])
+        echo -e ${end_msg}
+        exit 0
+        ;;
+
+        [yY][eE][sS])
+        standalone_install
+        echo -e ${end_msg}
+        exit 0
+        ;;
+
+        [yY])
+        standalone_install
+        echo -e ${end_msg}
+        exit 0
+        ;;
+    esac
 
 elif [ $? -ne 0 ];
 then
