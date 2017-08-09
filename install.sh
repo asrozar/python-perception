@@ -11,7 +11,7 @@ if [ $EUID -ne 0 ]; then
  exit 1
 fi
 
-kernal=$(uname -r)
+kernel=$(uname -r)
 hostname=$(hostname)
 install_log="/tmp/python-perception-install.log"
 es_pgp_key="deb https://artifacts.elastic.co/packages/5.x/apt stable main"
@@ -54,7 +54,7 @@ standalone_install(){
 }
 
 
-if [[ ! "$kernal" =~ "kali4" ]];
+if [[ ! "$kernel" =~ "kali4" ]];
 then
     echo ${unsupported}
     exit 1
