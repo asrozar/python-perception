@@ -522,13 +522,12 @@ def parse_nmap_xml(nmap_results):
 
                     nmap_json_data = json.dumps(host_dict)
 
-                    if config.es_direct:
-                        esearch.Elasticsearch.add_document(config.es_host,
-                                                           config.es_port,
-                                                           config.es_index,
-                                                           'nmap',
-                                                           str(nmap_host.id),
-                                                           nmap_json_data)
+                    esearch.Elasticsearch.add_document(config.es_host,
+                                                       config.es_port,
+                                                       config.es_index,
+                                                       'nmap',
+                                                       str(nmap_host.id),
+                                                       nmap_json_data)
 
         nmap_db_session.close()
         return host_list
