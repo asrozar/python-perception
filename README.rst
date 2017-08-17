@@ -76,7 +76,7 @@ There are two parts to this application.
     
     The interrogation of the network devices yields information about locally connected hosts, subnets
     arp-cache tables and discovery protocol information. If discovery mode is configured as "active" [default=passive], during 
-    interrogation the local hosts will be port scanned using nmap -sS -sV host_ip.
+    interrogation the local hosts will be port scanned using nmap -sS -A host_ip.
     
     DiscoveryProtocolSpider() checks the DiscoveryProtocolFinding table for new network devices to
     interrogate and adds them to the SeedRouter table.
