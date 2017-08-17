@@ -53,12 +53,12 @@ def discover_live_hosts(scan_list):
                 if cider:
                     addr_type = 'cider'
 
-                nmap_scan_xml_path = nmap_ss_sv_scan(x,
-                                                     None,
-                                                     None,
-                                                     None,
-                                                     None,
-                                                     addr_type)
+                nmap_scan_xml_path = nmap_ssa_scan(x,
+                                                   None,
+                                                   None,
+                                                   None,
+                                                   None,
+                                                   addr_type)
 
                 if nmap_scan_xml_path == 99:
                     syslog.syslog(syslog.LOG_INFO, 'RunNmap error: Could not run on %s %s' % (addr_type, x))
@@ -79,7 +79,7 @@ def discover_live_hosts(scan_list):
 
 
 # TODO: remove duplicate code, follow DRY
-def nmap_ss_sv_scan(host, mac, mac_vendor, adjacency_switch, adjacency_int, addr_type):
+def nmap_ssa_scan(host, mac, mac_vendor, adjacency_switch, adjacency_int, addr_type):
     port_scan = 1
     xml_file = False
 
@@ -87,7 +87,7 @@ def nmap_ss_sv_scan(host, mac, mac_vendor, adjacency_switch, adjacency_int, addr
         xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, host, int(time.time()))
         port_scan = call([nmap,
                           '-sS',
-                          '-sV',
+                          '-A',
                           host,
                           '-Pn',
                           '--open',
@@ -153,12 +153,12 @@ class RunNmap(object):
                 if cider:
                     addr_type = 'cider'
 
-                nmap_scan_xml_path = nmap_ss_sv_scan(self.host,
-                                                     self.mac,
-                                                     self.mac_vendor,
-                                                     self.adjacency_switch,
-                                                     self.adjacency_int,
-                                                     addr_type)
+                nmap_scan_xml_path = nmap_ssa_scan(self.host,
+                                                   self.mac,
+                                                   self.mac_vendor,
+                                                   self.adjacency_switch,
+                                                   self.adjacency_int,
+                                                   addr_type)
 
                 if nmap_scan_xml_path == 99:
                     syslog.syslog(syslog.LOG_INFO, 'RunNmap error: Could not run on %s %s' % (addr_type, self.host))
