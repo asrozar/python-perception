@@ -377,6 +377,7 @@ def parse_nmap_xml(nmap_results):
                     for each_port in p:
 
                         service_name = None
+                        service_product = None
                         ex_info = None
                         svc_cpe_product = None
 
@@ -410,7 +411,7 @@ def parse_nmap_xml(nmap_results):
                             pass
 
                         try:
-                            product = service_info.get('product')
+                            service_product = service_info.get('product')
                         except IndexError:
                             pass
 
@@ -425,7 +426,7 @@ def parse_nmap_xml(nmap_results):
                             inventory_port = {'protocol': protocol,
                                               'portid': portid,
                                               'name': service_name,
-                                              'product': product,
+                                              'product': service_product,
                                               'extra_info': ex_info}
 
                             port_dict_list.append(inventory_port)
@@ -473,7 +474,7 @@ def parse_nmap_xml(nmap_results):
                             inventory_port = {'protocol': protocol,
                                               'portid': portid,
                                               'name': service_name,
-                                              'product': product,
+                                              'product': service_product,
                                               'extra_info': ex_info,
                                               'svc_product': svc_product}
 
@@ -485,16 +486,29 @@ def parse_nmap_xml(nmap_results):
                             port_dict_list.append(inventory_port)
                             port_list.append(port_dict)
 
-                inventory_host = {'nmap_ipv4': ipv4,
-                                  'nmap_ipv6': ipv6,
-                                  'nmap_mac_addr': mac_addr,
-                                  'nmap_os_type': os_type,
-                                  'nmap_mac_vendor': mac_vendor,
-                                  'nmap_state': state,
-                                  'nmap_host_name': host_name,
-                                  'nmap_product': product,
-                                  'nmap_adjacency_switch': adjacency_switch,
-                                  'nmap_adjacency_int': adjacency_int}
+                try:
+                    inventory_host = {'nmap_ipv4': ipv4,
+                                      'nmap_ipv6': ipv6,
+                                      'nmap_mac_addr': mac_addr,
+                                      'nmap_os_type': os_type,
+                                      'nmap_mac_vendor': mac_vendor,
+                                      'nmap_state': state,
+                                      'nmap_host_name': host_name,
+                                      'nmap_product': product['cpe'],
+                                      'nmap_adjacency_switch': adjacency_switch,
+                                      'nmap_adjacency_int': adjacency_int}
+
+                except TypeError:
+                    inventory_host = {'nmap_ipv4': ipv4,
+                                      'nmap_ipv6': ipv6,
+                                      'nmap_mac_addr': mac_addr,
+                                      'nmap_os_type': os_type,
+                                      'nmap_mac_vendor': mac_vendor,
+                                      'nmap_state': state,
+                                      'nmap_host_name': host_name,
+                                      'nmap_product': None,
+                                      'nmap_adjacency_switch': adjacency_switch,
+                                      'nmap_adjacency_int': adjacency_int}
 
                 host_dict = {'nmap_inventory_host': inventory_host,
                              'nmap_ports': port_dict_list,
