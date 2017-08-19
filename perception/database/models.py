@@ -187,3 +187,12 @@ class OpenVasVuln(Base):
     perception_product_uuid = Column(postgresql.UUID, nullable=False)
     ip_addr = Column(postgresql.INET, unique=True, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), default=_get_date)
+
+
+class Asset(Base):
+    __tablename__ = 'assets'
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    perception_product_uuid = Column(postgresql.UUID, nullable=False)
+    ip_addr = Column(postgresql.INET, unique=True, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), default=_get_date)
