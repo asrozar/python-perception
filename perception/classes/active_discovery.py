@@ -132,7 +132,6 @@ class RunNmap(object):
                     except socket.herror:
                         name = ['unknown']
 
-                    # if nmap_ts is not None:
                     BuildAsset(self.host, name[0], cpe_list, nmap_ts, mac_vendor)
 
                     if self.vuln_scan is True and self.openvas_user_username and self.openvas_user_password:
@@ -193,54 +192,67 @@ class BuildAsset(object):
                     syslog.syslog(syslog.LOG_INFO, 'BuildAsset info, multiple cpe options: %s' % str(oh_list))
 
     def run(self):
-        clean_name = None
-        os_cpe = self.profiler()
-        os_cpe_split = os_cpe.split(':')
-
         try:
-            product = os_cpe_split[3]
+            clean_name = None
+            os_cpe = self.profiler()
+            os_cpe_split = os_cpe.split(':')
 
-        except IndexError:
-            product = None
+            try:
+                product = os_cpe_split[3]
 
-        try:
-            version = os_cpe_split[4]
+                if not product:
+                    product = None
 
-        except IndexError:
-            version = None
+            except IndexError:
+                product = None
 
-        if product is not None:
-            split_prod = product.split('_')
-            joined_name = ' '.join(split_prod)
+            try:
+                version = os_cpe_split[4]
 
-            if version:
-                clean_name = '%s %s' % (joined_name, version)
+                if not version:
+                    version = None
 
-            elif version is None:
-                clean_name = joined_name
+            except IndexError:
+                version = None
 
-        asset = {'address': self.address,
-                 'name': self.name,
-                 'os': clean_name.upper(),
-                 'discovery_ts': self.discovery_ts,
-                 'hardware': self.hardware}
+            if product is not None:
+                split_prod = product.split('_')
+                joined_name = ' '.join(split_prod)
 
-        db_session = sql.Sql.create_session()
+                if version is not None:
+                    clean_name = '%s %s' % (joined_name, version)
 
-        assets = sql.Sql.get_or_create(db_session,
-                                       Asset,
-                                       ip_addr=self.address,
-                                       perception_product_uuid=system_uuid)
+                elif version is None:
+                    clean_name = joined_name
 
-        nmap_json_data = json.dumps(asset)
+            if clean_name is None:
+                clean_name = 'unknown'
 
-        esearch.Elasticsearch.add_document(config.es_host,
-                                           config.es_port,
-                                           config.es_index,
-                                           'assets',
-                                           str(assets.id),
-                                           nmap_json_data)
-        db_session.close()
+            asset = {'address': self.address,
+                     'name': self.name,
+                     'os': clean_name.upper(),
+                     'discovery_ts': self.discovery_ts,
+                     'hardware': self.hardware}
+
+            db_session = sql.Sql.create_session()
+
+            assets = sql.Sql.get_or_create(db_session,
+                                           Asset,
+                                           ip_addr=self.address,
+                                           perception_product_uuid=system_uuid)
+
+            nmap_json_data = json.dumps(asset)
+
+            esearch.Elasticsearch.add_document(config.es_host,
+                                               config.es_port,
+                                               config.es_index,
+                                               'assets',
+                                               str(assets.id),
+                                               nmap_json_data)
+            db_session.close()
+
+        except Exception as BuildAsset_error:
+            syslog.syslog(syslog.LOG_INFO, 'BuildAsset error: %s' % str(BuildAsset_error))
 
 
 class RunOpenVas(object):
