@@ -195,35 +195,37 @@ class BuildAsset(object):
         try:
             clean_name = None
             os_cpe = self.profiler()
-            os_cpe_split = os_cpe.split(':')
 
-            try:
-                product = os_cpe_split[3]
+            if os_cpe is not None:
+                os_cpe_split = os_cpe.split(':')
 
-                if not product:
+                try:
+                    product = os_cpe_split[3]
+
+                    if not product:
+                        product = None
+
+                except IndexError:
                     product = None
 
-            except IndexError:
-                product = None
+                try:
+                    version = os_cpe_split[4]
 
-            try:
-                version = os_cpe_split[4]
+                    if not version:
+                        version = None
 
-                if not version:
+                except IndexError:
                     version = None
 
-            except IndexError:
-                version = None
+                if product is not None:
+                    split_prod = product.split('_')
+                    joined_name = ' '.join(split_prod)
 
-            if product is not None:
-                split_prod = product.split('_')
-                joined_name = ' '.join(split_prod)
+                    if version is not None:
+                        clean_name = '%s %s' % (joined_name, version)
 
-                if version is not None:
-                    clean_name = '%s %s' % (joined_name, version)
-
-                elif version is None:
-                    clean_name = joined_name
+                    elif version is None:
+                        clean_name = joined_name
 
             if clean_name is None:
                 clean_name = 'unknown'
