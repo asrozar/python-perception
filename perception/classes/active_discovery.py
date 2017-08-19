@@ -2,21 +2,17 @@ from os import makedirs, devnull, path, remove
 from subprocess import Popen, PIPE, call
 from perception.shared.functions import get_product_uuid
 from perception.shared.variables import nmap_tmp_dir
-from perception.classes.xml_output_parser import parse_nmap_xml, parse_openvas_xml
+from perception.classes.xml_output_parser import parse_nmap_xml
 from perception.classes.openvas import create_port_list,\
-    create_config,\
     create_target,\
     create_task,\
-    modify_config, \
-    get_info, \
     delete_reports,\
     delete_targets,\
     delete_task,\
     start_task,\
     check_task,\
     get_report, \
-    delete_port_list,\
-    delete_config
+    delete_port_list
 from perception.classes.network import Network
 import threading
 import syslog
@@ -33,91 +29,8 @@ nmap = p.stdout.read().strip().decode("utf-8")
 system_uuid = get_product_uuid()
 
 
-# TODO: remove duplicate code, follow DRY
-def discover_live_hosts(scan_list):
-    live_host_list = list()
-
-    for x in scan_list:
-
-        # find valid hosts and ports
-        try:
-
-            cider = Network.check_if_valid_cider(x)
-            ip_addr = Network.check_if_valid_address(x)
-
-            if ip_addr or cider:
-                addr_type = None
-
-                if ip_addr:
-                    addr_type = 'host'
-                if cider:
-                    addr_type = 'cider'
-
-                nmap_scan_xml_path = nmap_ssa_scan(x,
-                                                   None,
-                                                   None,
-                                                   None,
-                                                   None,
-                                                   addr_type)
-
-                if nmap_scan_xml_path == 99:
-                    syslog.syslog(syslog.LOG_INFO, 'RunNmap error: Could not run on %s %s' % (addr_type, x))
-
-                else:
-                    live_host_list = parse_nmap_xml(nmap_scan_xml_path)
-                    remove(nmap_scan_xml_path[0])
-
-                    return live_host_list
-
-        except TypeError as type_e:
-            syslog.syslog(syslog.LOG_INFO, 'RunOpenVas error: %s' % str(type_e))
-            return 99
-
-        if not live_host_list:
-            syslog.syslog(syslog.LOG_INFO, 'RunOpenVas info: Host list is empty')
-            return 99
-
-
-# TODO: remove duplicate code, follow DRY
-def nmap_ssa_scan(host, mac, mac_vendor, adjacency_switch, adjacency_int, addr_type):
-    port_scan = 1
-    xml_file = False
-
-    if addr_type == 'host':
-        xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, host, int(time.time()))
-        port_scan = call([nmap,
-                          '-sS',
-                          '-A',
-                          host,
-                          '-Pn',
-                          '--open',
-                          '-oX',
-                          xml_file],
-                         shell=False,
-                         stdout=FNULL)
-
-    if addr_type == 'cider':
-        cider = host.replace('/', '_')
-        xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, cider, int(time.time()))
-        port_scan = call([nmap,
-                          '-sS',
-                          '-sV',
-                          host,
-                          '--open',
-                          '-oX',
-                          xml_file],
-                         shell=False,
-                         stdout=FNULL)
-
-    if port_scan == 0:
-        return xml_file, mac, mac_vendor, adjacency_switch, adjacency_int
-
-    else:
-        return 99
-
-
 class RunNmap(object):
-    def __init__(self, host, mac, mac_vendor, adjacency_switch, adjacency_int):
+    def __init__(self, host, mac, mac_vendor, adjacency_switch, adjacency_int, vuln_scan, openvas_user_username, openvas_user_password):
         """Run the Nmap scanner based on the nmap configuration at the (config/nmap): mode"""
 
         self.host = host
@@ -125,9 +38,49 @@ class RunNmap(object):
         self.mac_vendor = mac_vendor
         self.adjacency_switch = adjacency_switch
         self.adjacency_int = adjacency_int
+        self.vuln_scan = vuln_scan
+        self.openvas_user_username = openvas_user_username
+        self.openvas_user_password = openvas_user_password
 
         t = threading.Thread(target=self.run)
         t.start()
+
+    @staticmethod
+    def nmap_ssa_scan(host, mac, mac_vendor, adjacency_switch, adjacency_int, addr_type):
+        port_scan = 1
+        xml_file = False
+
+        if addr_type == 'host':
+            xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, host, int(time.time()))
+            port_scan = call([nmap,
+                              '-sS',
+                              '-A',
+                              host,
+                              '-Pn',
+                              '--open',
+                              '-oX',
+                              xml_file],
+                             shell=False,
+                             stdout=FNULL)
+
+        if addr_type == 'cider':
+            cider = host.replace('/', '_')
+            xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, cider, int(time.time()))
+            port_scan = call([nmap,
+                              '-sS',
+                              '-sV',
+                              host,
+                              '--open',
+                              '-oX',
+                              xml_file],
+                             shell=False,
+                             stdout=FNULL)
+
+        if port_scan == 0:
+            return xml_file, mac, mac_vendor, adjacency_switch, adjacency_int
+
+        else:
+            return 99
 
     def run(self):
 
@@ -153,27 +106,32 @@ class RunNmap(object):
                 if cider:
                     addr_type = 'cider'
 
-                nmap_scan_xml_path = nmap_ssa_scan(self.host,
-                                                   self.mac,
-                                                   self.mac_vendor,
-                                                   self.adjacency_switch,
-                                                   self.adjacency_int,
-                                                   addr_type)
+                nmap_scan_xml_path = self.nmap_ssa_scan(self.host,
+                                                        self.mac,
+                                                        self.mac_vendor,
+                                                        self.adjacency_switch,
+                                                        self.adjacency_int,
+                                                        addr_type)
 
                 if nmap_scan_xml_path == 99:
                     syslog.syslog(syslog.LOG_INFO, 'RunNmap error: Could not run on %s %s' % (addr_type, self.host))
 
                 else:
-                    parse_nmap_xml(nmap_scan_xml_path)
+                    scn_pkg_list = parse_nmap_xml(nmap_scan_xml_path)
                     remove(nmap_scan_xml_path[0])
+
+                    if self.vuln_scan is True and self.openvas_user_username and self.openvas_user_password:
+
+                        for scn_pkg in scn_pkg_list:
+                            RunOpenVas(scn_pkg, self.openvas_user_username, self.openvas_user_password)
 
         except TypeError as type_e:
             syslog.syslog(syslog.LOG_INFO, 'RunNmap error: %s' % str(type_e))
 
 
 class RunOpenVas(object):
-    def __init__(self, host, openvas_user_username, openvas_user_password):
-        self.host = host
+    def __init__(self, scn_pkg, openvas_user_username, openvas_user_password):
+        self.scn_pkg = scn_pkg
         self.openvas_user_username = openvas_user_username
         self.openvas_user_password = openvas_user_password
 
@@ -187,11 +145,11 @@ class RunOpenVas(object):
         tcp_port_list_id = False
         udp_port_list_id = False
 
-        host_ipv4 = self.host['ipv4']
-        host_ipv6 = self.host['ipv6']
+        host_ipv4 = self.scn_pkg['ipv4']
+        host_ipv6 = self.scn_pkg['ipv6']
 
         # build ports
-        for port in self.host['port_list']:
+        for port in self.scn_pkg['port_list']:
 
             if port['protocol'] == 'tcp':
                 tcp_list.append(port['portid'])
