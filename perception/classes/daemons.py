@@ -16,11 +16,11 @@ from perception.database.models import OpenvasAdmin,\
     HostWithBadSshKey, \
     HostUsingSshv1
 from perception.config import configuration as config
-from infrastructure import InterrogateRSI, sql, network, esearch
+from infrastructure import InterrogateRSI, network, esearch
 from openvas import setup_openvas,\
     update_openvas_db,\
     migrate_rebuild_db
-from active_discovery import RunNmap, RunOpenVas, discover_live_hosts
+from active_discovery import RunNmap
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 from re import match
 import threading
@@ -59,25 +59,23 @@ class MessageBroker(object):
         send_to_elasticsearch = match(r'^send_to_elasticsearch ', body)
 
         if run_nmap:
-            host_list = body.strip('run_nmap_on ')
-            host_list = ast.literal_eval(host_list)
+            nm_host_list = body.strip('run_nmap_on ')
+            nm_host_list = ast.literal_eval(nm_host_list)
 
-            for host in host_list:
-                RunNmap(host, None, None, None, None)
+            for nm_host in nm_host_list:
+                RunNmap(nm_host, None, None, None, None, False, None, None)
 
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
         elif run_openvas:
-            host_list = body.strip('run_openvas_on ')
-            host_list = ast.literal_eval(host_list)
+            ov_host_list = body.strip('run_openvas_on ')
+            ov_host_list = ast.literal_eval(ov_host_list)
 
             if openvas_admin:
 
-                live_hosts = discover_live_hosts(host_list)
+                for ov_host in ov_host_list:
 
-                for host in live_hosts:
-
-                    RunOpenVas(host, openvas_admin.username, openvas_admin.password)
+                    RunNmap(ov_host, None, None, None, None, True, openvas_admin.username, openvas_admin.password)
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
 
