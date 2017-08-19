@@ -243,7 +243,7 @@ def parse_nmap_xml(nmap_results):
     try:
         #  Find all the hosts in the nmap scan
         nmap_db_session = sql.Sql.create_session()
-        host_list = list()
+        ov_scan_pkg = list()
 
         for host in root.findall('host'):
 
@@ -520,7 +520,7 @@ def parse_nmap_xml(nmap_results):
                                  'mac_vendor': mac_vendor,
                                  'port_list': port_list}
 
-                host_list.append(host_dict_4ov)
+                ov_scan_pkg.append(host_dict_4ov)
 
                 if ipv4:
                     ip_addr = ipv4
@@ -544,7 +544,7 @@ def parse_nmap_xml(nmap_results):
                                                        nmap_json_data)
 
         nmap_db_session.close()
-        return host_list
+        return ov_scan_pkg
 
     except Exception as nmap_xml_e:
         syslog.syslog(syslog.LOG_INFO, '####  Failed to parse the Nmap XML output file %s  ####' % str(nmap_results))
