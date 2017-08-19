@@ -23,28 +23,28 @@ class OpenvasAdmin(Base):
 
 
 class SvcUser(Base):
-        __tablename__ = 'svc_users'
+    __tablename__ = 'svc_users'
 
-        id = Column(Integer, primary_key=True, nullable=False)
-        perception_product_uuid = Column(postgresql.UUID, nullable=False)
-        username = Column(String, nullable=False, unique=True)
-        description = Column(String)
+    id = Column(Integer, primary_key=True, nullable=False)
+    perception_product_uuid = Column(postgresql.UUID, nullable=False)
+    username = Column(String, nullable=False, unique=True)
+    description = Column(String)
 
-        created_at = Column(TIMESTAMP(timezone=True), default=_get_date)
-        updated_at = Column(TIMESTAMP(timezone=True), default=_get_date)
+    created_at = Column(TIMESTAMP(timezone=True), default=_get_date)
+    updated_at = Column(TIMESTAMP(timezone=True), default=_get_date)
 
-        def __init__(self,
-                     perception_product_uuid,
-                     username=None,
-                     description=None):
+    def __init__(self,
+                 perception_product_uuid,
+                 username=None,
+                 description=None):
 
-            self.perception_product_uuid = perception_product_uuid
+        self.perception_product_uuid = perception_product_uuid
 
-            if description:
-                self.description = description
+        if description:
+            self.description = description
 
-            if username:
-                self.username = username
+        if username:
+            self.username = username
 
 
 class RSInfrastructure(Base):
