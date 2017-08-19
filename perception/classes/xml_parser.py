@@ -1,9 +1,10 @@
-# TODO: fix in 0.6 (Make this a class)
+# TODO: fix in 0.7 (Make this a class)
 
 import xml.etree.ElementTree as ET
 import syslog
 import json
 import time
+import re
 from socket import gethostbyaddr, herror
 from perception.config import configuration as config
 from perception.database.models import NmapHost, OpenVasVuln
@@ -18,7 +19,6 @@ def parse_openvas_xml(openvas_xml, *args):
     name = None
     cvss = None
     cve = None
-    host = None
     threat = None
     severity = None
     family = None
@@ -214,13 +214,12 @@ def parse_openvas_xml(openvas_xml, *args):
 
             openvas_json_data = json.dumps(vuln_host)
 
-            if config.es_direct:
-                esearch.Elasticsearch.add_document(config.es_host,
-                                                   config.es_port,
-                                                   config.es_index,
-                                                   'openvas',
-                                                   str(openvas_vuln.id),
-                                                   openvas_json_data)
+            esearch.Elasticsearch.add_document(config.es_host,
+                                               config.es_port,
+                                               config.es_index,
+                                               'openvas',
+                                               str(openvas_vuln.id),
+                                               openvas_json_data)
 
             openvas_db_session.close()
             return 0
@@ -244,6 +243,9 @@ def parse_nmap_xml(nmap_results):
         #  Find all the hosts in the nmap scan
         nmap_db_session = sql.Sql.create_session()
         ov_scan_pkg = list()
+        cpe_list = list()
+        nmap_ts = None
+        mac_vendor = None
 
         for host in root.findall('host'):
 
@@ -462,6 +464,9 @@ def parse_nmap_xml(nmap_results):
                             except IndexError:
                                 pass
 
+                            if svc_cpe not in cpe_list:
+                                cpe_list.append(svc_cpe)
+
                             svc_product = {'cpe': svc_cpe,
                                            'product_type': svc_cpe_product_type,
                                            'svc_cpe_product_vendor': svc_cpe_product_vendor,
@@ -487,6 +492,17 @@ def parse_nmap_xml(nmap_results):
                             port_list.append(port_dict)
 
                 try:
+
+                    nmap_o = re.match(r'^cpe:/o:', product['cpe'])
+
+                    if nmap_o:
+                        cpe_list = [product['cpe']]
+
+                    elif not nmap_o:
+
+                        if product['cpe'] not in cpe_list:
+                            cpe_list.append(product['cpe'])
+
                     inventory_host = {'nmap_ipv4': ipv4,
                                       'nmap_ipv6': ipv6,
                                       'nmap_mac_addr': mac_addr,
@@ -499,6 +515,10 @@ def parse_nmap_xml(nmap_results):
                                       'nmap_adjacency_int': adjacency_int}
 
                 except TypeError:
+
+                    if 'unknown' not in cpe_list:
+                        cpe_list.append('unknown')
+
                     inventory_host = {'nmap_ipv4': ipv4,
                                       'nmap_ipv6': ipv6,
                                       'nmap_mac_addr': mac_addr,
@@ -510,10 +530,12 @@ def parse_nmap_xml(nmap_results):
                                       'nmap_adjacency_switch': adjacency_switch,
                                       'nmap_adjacency_int': adjacency_int}
 
+                nmap_ts = int(time.time())
+
                 host_dict = {'nmap_inventory_host': inventory_host,
                              'nmap_ports': port_dict_list,
                              'nmap_perception_product_uuid': system_uuid,
-                             'nmap_timestamp': int(time.time())}
+                             'nmap_timestamp': nmap_ts}
 
                 host_dict_4ov = {'ipv4': ipv4,
                                  'ipv6': ipv6,
@@ -544,7 +566,7 @@ def parse_nmap_xml(nmap_results):
                                                        nmap_json_data)
 
         nmap_db_session.close()
-        return ov_scan_pkg
+        return ov_scan_pkg, cpe_list, mac_vendor, nmap_ts
 
     except Exception as nmap_xml_e:
         syslog.syslog(syslog.LOG_INFO, '####  Failed to parse the Nmap XML output file %s  ####' % str(nmap_results))
