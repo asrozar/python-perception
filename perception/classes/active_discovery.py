@@ -1,8 +1,9 @@
 from os import makedirs, devnull, path, remove
 from subprocess import Popen, PIPE, call
+from perception.database.models import Asset
 from perception.shared.functions import get_product_uuid
 from perception.shared.variables import nmap_tmp_dir
-from perception.classes.xml_output_parser import parse_nmap_xml
+from perception.classes.xml_parser import parse_nmap_xml, esearch, sql
 from perception.classes.openvas import create_port_list,\
     create_target,\
     create_task,\
@@ -14,9 +15,13 @@ from perception.classes.openvas import create_port_list,\
     get_report, \
     delete_port_list
 from perception.classes.network import Network
+from perception.config import configuration as config
 import threading
 import syslog
 import time
+import socket
+import difflib
+import json
 
 FNULL = open(devnull, 'w')
 
@@ -49,9 +54,10 @@ class RunNmap(object):
     def nmap_ssa_scan(host, mac, mac_vendor, adjacency_switch, adjacency_int, addr_type):
         port_scan = 1
         xml_file = False
+        nmap_ts = int(time.time())
 
         if addr_type == 'host':
-            xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, host, int(time.time()))
+            xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, host, nmap_ts)
             port_scan = call([nmap,
                               '-sS',
                               '-A',
@@ -65,7 +71,7 @@ class RunNmap(object):
 
         if addr_type == 'cider':
             cider = host.replace('/', '_')
-            xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, cider, int(time.time()))
+            xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, cider, nmap_ts)
             port_scan = call([nmap,
                               '-sS',
                               '-sV',
@@ -117,8 +123,17 @@ class RunNmap(object):
                     syslog.syslog(syslog.LOG_INFO, 'RunNmap error: Could not run on %s %s' % (addr_type, self.host))
 
                 else:
-                    scn_pkg_list = parse_nmap_xml(nmap_scan_xml_path)
+                    scn_pkg_list, cpe_list, mac_vendor, nmap_ts = parse_nmap_xml(nmap_scan_xml_path)
                     remove(nmap_scan_xml_path[0])
+
+                    # build asset doc for ES
+                    try:
+                        name = socket.gethostbyaddr(self.host)
+                    except socket.herror:
+                        name = ['unknown']
+
+                    # if nmap_ts is not None:
+                    BuildAsset(self.host, name[0], cpe_list, nmap_ts, mac_vendor)
 
                     if self.vuln_scan is True and self.openvas_user_username and self.openvas_user_password:
 
@@ -127,6 +142,105 @@ class RunNmap(object):
 
         except TypeError as type_e:
             syslog.syslog(syslog.LOG_INFO, 'RunNmap error: %s' % str(type_e))
+
+
+class BuildAsset(object):
+    def __init__(self, address, name, cpe_list, discovery_ts, hardware):
+        self.address = address
+        self.name = name
+        self.cpe_list = cpe_list
+        self.discovery_ts = discovery_ts
+        self.hardware = hardware
+
+        self.profiler()
+
+        t = threading.Thread(target=self.run)
+        t.start()
+
+    def profiler(self):
+        oh_list = list()
+        o = 0
+        h = 0
+
+        for cpe in self.cpe_list:
+            cpe_split = cpe.split(':')
+            cpe_type = cpe_split[1].lstrip('/')
+
+            if cpe_type != 'a':
+                if cpe_type not in oh_list:
+
+                    if cpe_type == 'o':
+                        o += 1
+                    elif cpe_type == 'h':
+                        h += 1
+
+                    oh_list.append(cpe)
+
+        if len(oh_list) == 1:
+
+            return oh_list[0]
+
+        elif len(oh_list) > 1:
+
+            if o >= 1:
+                os_list = difflib.get_close_matches('cpe:/o:', oh_list)
+
+                if os_list == 1:
+
+                    return os_list[0]
+
+                else:
+                    syslog.syslog(syslog.LOG_INFO, 'BuildAsset info, multiple cpe options: %s' % str(oh_list))
+
+    def run(self):
+        clean_name = None
+        os_cpe = self.profiler()
+        os_cpe_split = os_cpe.split(':')
+
+        try:
+            product = os_cpe_split[3]
+
+        except IndexError:
+            product = None
+
+        try:
+            version = os_cpe_split[4]
+
+        except IndexError:
+            version = None
+
+        if product is not None:
+            split_prod = product.split('_')
+            joined_name = ' '.join(split_prod)
+
+            if version:
+                clean_name = '%s %s' % (joined_name, version)
+
+            elif version is None:
+                clean_name = joined_name
+
+        asset = {'address': self.address,
+                 'name': self.name,
+                 'os': clean_name.upper(),
+                 'discovery_ts': self.discovery_ts,
+                 'hardware': self.hardware}
+
+        db_session = sql.Sql.create_session()
+
+        assets = sql.Sql.get_or_create(db_session,
+                                       Asset,
+                                       ip_addr=self.address,
+                                       perception_product_uuid=system_uuid)
+
+        nmap_json_data = json.dumps(asset)
+
+        esearch.Elasticsearch.add_document(config.es_host,
+                                           config.es_port,
+                                           config.es_index,
+                                           'assets',
+                                           str(assets.id),
+                                           nmap_json_data)
+        db_session.close()
 
 
 class RunOpenVas(object):
@@ -200,16 +314,20 @@ class RunOpenVas(object):
                 if xml_report_id:
 
                     # wait until the task is done
-                    while True:
-                        check_task_response = check_task(task_id, self.openvas_user_username,
-                                                         self.openvas_user_password)
-                        if check_task_response == 'Done' or check_task_response == 'Stopped':
-                            break
-                        time.sleep(60)
 
-                    # download and parse the report
-                    if xml_report_id is not None:
-                        get_report(xml_report_id, self.openvas_user_username, self.openvas_user_password)
+                    try:
+                        while True:
+                            check_task_response = check_task(task_id, self.openvas_user_username,
+                                                             self.openvas_user_password)
+                            if check_task_response == 'Done' or check_task_response == 'Stopped':
+                                # parse the report
+                                get_report(xml_report_id, self.openvas_user_username, self.openvas_user_password)
+                                break
+
+                            time.sleep(60*3)
+
+                    except Exception as waiting_on_task:
+                        syslog.syslog(syslog.LOG_INFO, 'RunOpenVas waiting_on_task error: %s' % str(waiting_on_task))
 
                     # delete the task
                     if task_id is not None:
@@ -240,5 +358,5 @@ class RunOpenVas(object):
 
             self.scan()
 
-        except Exception as openvas_e:
-            syslog.syslog(syslog.LOG_INFO, 'RunOpenVas error: %s' % str(openvas_e))
+        except Exception as RunOpenVas_Error:
+            syslog.syslog(syslog.LOG_INFO, 'RunOpenVas error: %s' % str(RunOpenVas_Error))
