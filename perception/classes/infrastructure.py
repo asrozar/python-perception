@@ -957,7 +957,10 @@ class InterrogateRSI(object):
                                          h['local_host_mac_addr'],
                                          mac_vendor,
                                          '%s (%s)' % (rsi.ip_addr, rsi.host_name),
-                                         h['local_host_adjacency_int'])
+                                         h['local_host_adjacency_int'],
+                                         False,
+                                         None,
+                                         None)
 
         rsi_db_session.close()
         return
