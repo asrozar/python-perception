@@ -1,4 +1,4 @@
-# TODO: fix in 0.6 (Make this a class)
+# TODO: fix in 0.7 (Make this a class)
 
 import datetime
 import syslog
@@ -7,7 +7,7 @@ from os import path, makedirs, system
 from subprocess import call, check_output, CalledProcessError, PIPE
 from re import match, search
 from time import sleep
-from perception.classes.xml_output_parser import parse_openvas_xml
+from perception.classes.xml_parser import parse_openvas_xml
 from perception.database.models import OpenvasAdmin, OpenvasLastUpdate
 from perception.shared.functions import get_product_uuid
 from perception import db_session
