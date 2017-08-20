@@ -1,10 +1,13 @@
 from os import makedirs, devnull, path, remove
 from subprocess import Popen, PIPE, call
+from perception.config import configuration as config
 from perception.database.models import Asset
 from perception.shared.functions import get_product_uuid
 from perception.shared.variables import nmap_tmp_dir
-from perception.classes.xml_parser import parse_nmap_xml, esearch, sql
-from perception.classes.openvas import create_port_list,\
+from xml_parser import parse_nmap_xml
+from sql import Sql
+from esearch import Elasticsearch
+from openvas import create_port_list,\
     create_target,\
     create_task,\
     delete_reports,\
@@ -14,12 +17,10 @@ from perception.classes.openvas import create_port_list,\
     check_task,\
     get_report, \
     delete_port_list
-from perception.classes.network import Network
-from perception.config import configuration as config
+from network import Network
 import threading
 import syslog
 import time
-import socket
 import re
 import json
 
@@ -237,21 +238,21 @@ class BuildAsset(object):
                      'discovery_ts': self.discovery_ts,
                      'hardware': self.hardware}
 
-            db_session = sql.Sql.create_session()
+            db_session = Sql.create_session()
 
-            assets = sql.Sql.get_or_create(db_session,
-                                           Asset,
-                                           ip_addr=self.address,
-                                           perception_product_uuid=system_uuid)
+            assets = Sql.get_or_create(db_session,
+                                       Asset,
+                                       ip_addr=self.address,
+                                       perception_product_uuid=system_uuid)
 
             nmap_json_data = json.dumps(asset)
 
-            esearch.Elasticsearch.add_document(config.es_host,
-                                               config.es_port,
-                                               config.es_index,
-                                               'assets',
-                                               str(assets.id),
-                                               nmap_json_data)
+            Elasticsearch.add_document(config.es_host,
+                                       config.es_port,
+                                       config.es_index,
+                                       'assets',
+                                       str(assets.id),
+                                       nmap_json_data)
             db_session.close()
 
         except Exception as BuildAsset_error:
