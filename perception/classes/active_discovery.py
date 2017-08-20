@@ -20,7 +20,7 @@ import threading
 import syslog
 import time
 import socket
-import difflib
+import re
 import json
 
 FNULL = open(devnull, 'w')
@@ -182,14 +182,15 @@ class BuildAsset(object):
         elif len(oh_list) > 1:
 
             if o >= 1:
-                os_list = difflib.get_close_matches('cpe:/o:', oh_list)
+                regex = re.compile('cpe:/o:.*')
+                match_list = [m.group(0) for l in oh_list for m in [regex.search(l)] if m]
 
-                if os_list == 1:
+                if len(match_list) == 1:
 
-                    return os_list[0]
+                    return match_list[0]
 
                 else:
-                    syslog.syslog(syslog.LOG_INFO, 'BuildAsset info, multiple cpe options: %s' % str(oh_list))
+                    syslog.syslog(syslog.LOG_INFO, 'BuildAsset info, multiple cpe options: %s' % str(match_list))
 
     def run(self):
         try:
