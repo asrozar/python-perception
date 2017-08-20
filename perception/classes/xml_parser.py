@@ -8,7 +8,7 @@ import re
 from socket import gethostbyaddr, herror
 from perception.config import configuration as config
 from perception.database.models import NmapHost, OpenVasVuln
-from perception.classes import esearch, sql
+from perception.classes import esearch, sql, active_discovery
 from perception.shared.functions import get_product_uuid
 
 system_uuid = get_product_uuid()
@@ -565,8 +565,10 @@ def parse_nmap_xml(nmap_results):
                                                        str(nmap_host.id),
                                                        nmap_json_data)
 
+                    active_discovery.BuildAsset(ip_addr, host_name, cpe_list, nmap_ts, mac_vendor)
+
         nmap_db_session.close()
-        return ov_scan_pkg, cpe_list, mac_vendor, nmap_ts
+        return ov_scan_pkg
 
     except Exception as nmap_xml_e:
         syslog.syslog(syslog.LOG_INFO, '####  Failed to parse the Nmap XML output file %s  ####' % str(nmap_results))

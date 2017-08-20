@@ -123,16 +123,8 @@ class RunNmap(object):
                     syslog.syslog(syslog.LOG_INFO, 'RunNmap error: Could not run on %s %s' % (addr_type, self.host))
 
                 else:
-                    scn_pkg_list, cpe_list, mac_vendor, nmap_ts = parse_nmap_xml(nmap_scan_xml_path)
+                    scn_pkg_list = parse_nmap_xml(nmap_scan_xml_path)
                     remove(nmap_scan_xml_path[0])
-
-                    # build asset doc for ES
-                    try:
-                        name = socket.gethostbyaddr(self.host)
-                    except socket.herror:
-                        name = ['unknown']
-
-                    BuildAsset(self.host, name[0], cpe_list, nmap_ts, mac_vendor)
 
                     if self.vuln_scan is True and self.openvas_user_username and self.openvas_user_password:
 
@@ -191,6 +183,14 @@ class BuildAsset(object):
 
                 else:
                     syslog.syslog(syslog.LOG_INFO, 'BuildAsset info, multiple cpe options: %s' % str(match_list))
+
+            elif o < 1 < h:
+
+                if len(oh_list) == 1:
+                    return oh_list[0]
+
+                else:
+                    syslog.syslog(syslog.LOG_INFO, 'BuildAsset info, multiple cpe options: %s' % str(oh_list))
 
     def run(self):
         try:
