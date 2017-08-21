@@ -79,7 +79,6 @@ class MessageBroker(object):
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
 
-        # TODO: this is breaking json for some reason
         elif send_to_elasticsearch:
              send_to_elasticsearch = body.split('|')
              es_json_data = json.dumps(send_to_elasticsearch[3])
