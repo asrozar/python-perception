@@ -1,5 +1,3 @@
-# TODO: fix in 0.7 (Make this a class)
-
 import xml.etree.ElementTree as ET
 import syslog
 import json
@@ -17,7 +15,6 @@ system_uuid = get_product_uuid()
 
 
 def parse_openvas_xml(openvas_xml, *args):
-
     name = None
     cvss = None
     cve = None
@@ -125,6 +122,9 @@ def parse_openvas_xml(openvas_xml, *args):
 
         for result in results:
 
+            exploitable = False
+            exploitdb_list = list()
+
             try:
                 name = result.find('name').text
             except AttributeError:
@@ -190,7 +190,32 @@ def parse_openvas_xml(openvas_xml, *args):
 
             if float(cvss) > 0.0:
 
+                if cve != 'NOCVE':
+                    cve_list = cve.split(',')
+                    clean_list = map(str.lstrip, cve_list)
+
+                    for c in clean_list:
+                        query = '{ "match_phrase" : { "cve_list" : "%s" } } }' % c.lstrip('CVE-')
+
+                        response = Elasticsearch.search_documents(config.es_host,
+                                                                  config.es_port,
+                                                                  config.es_index,
+                                                                  'exploitdb',
+                                                                  'false',
+                                                                  None,
+                                                                  query)
+
+                        if int(response['hits']['total']) > 0:
+
+                            for r in response['hits']['hits']:
+                                if r['_id'] not in exploitdb_list:
+                                    exploitdb_list.append(r['_id'])
+
+                            exploitable = True
+
                 vulnerability = {'openvas_vuln_name': name,
+                                 'openvas_vuln_exploitable': exploitable,
+                                 'openvas_vuln_exploitdb_list': exploitdb_list,
                                  'openvas_vuln_cvss_score': cvss,
                                  'openvas_vuln_cve_id': cve,
                                  'openvas_vuln_family': family,
@@ -210,9 +235,9 @@ def parse_openvas_xml(openvas_xml, *args):
                          'vulns': vulnerability_list}
 
             openvas_vuln = Sql.get_or_create(openvas_db_session,
-                                                 OpenVasVuln,
-                                                 ip_addr=host_list[0],
-                                                 perception_product_uuid=system_uuid)
+                                             OpenVasVuln,
+                                             ip_addr=host_list[0],
+                                             perception_product_uuid=system_uuid)
 
             openvas_json_data = json.dumps(vuln_host)
 
@@ -245,11 +270,10 @@ def parse_nmap_xml(nmap_results):
         #  Find all the hosts in the nmap scan
         nmap_db_session = Sql.create_session()
         ov_scan_pkg = list()
-        cpe_list = list()
-        nmap_ts = None
-        mac_vendor = None
 
         for host in root.findall('host'):
+
+            cpe_list = list()
 
             port_dict_list = list()
             port_list = list()
@@ -362,7 +386,6 @@ def parse_nmap_xml(nmap_results):
                     pass
 
                 if os_product != ['']:
-
                     product = {'cpe': os_cpe,
                                'product_type': product_type,
                                'p_vendor': product_vendor,
@@ -573,5 +596,7 @@ def parse_nmap_xml(nmap_results):
         return ov_scan_pkg
 
     except Exception as nmap_xml_e:
-        syslog.syslog(syslog.LOG_INFO, '####  Failed to parse the Nmap XML output file %s  ####' % str(nmap_results))
+        syslog.syslog(syslog.LOG_INFO,
+                      '####  Failed to parse the Nmap XML output file %s  ####' % str(nmap_results))
         syslog.syslog(syslog.LOG_INFO, str(nmap_xml_e))
+
