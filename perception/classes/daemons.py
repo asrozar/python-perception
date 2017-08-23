@@ -111,6 +111,7 @@ class MessageBroker(object):
 
             except Exception as MessageBroker_e:
                 syslog.syslog(syslog.LOG_INFO, 'MessageBroker error: %s' % str(MessageBroker_e))
+                syslog.syslog(syslog.LOG_INFO, 'sys.exc_info()[0]: %s' % str(sys.exc_info()[0]))
 
             sleep(self.interval)
 
