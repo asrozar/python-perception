@@ -1,25 +1,81 @@
 import httplib
 import json
 import syslog
+import requests
+
+headers = {'Accept': 'text/plain',
+           'Content-type': 'application/json'}
 
 
 class Elasticsearch(object):
-    def __init__(self, es_host, es_port, doc_index, doc_type, doc_id, doc):
+    def __init__(self, es_host, es_port, doc_index, doc_type, doc_id, doc, source, size, query):
         self.es_host = es_host,
         self.es_port = es_port,
         self.doc_index = doc_index,
         self.doc_type = doc_type,
         self.doc_id = doc_id,
         self.doc = doc
+        self.source = source,
+        self.size = size
+        self.query = query
 
+        self.search_documents(es_host, es_port, doc_index, doc_type, source, size, query)
         self.add_document(es_host, es_port, doc_index, doc_type, doc_id, doc)
+
+    @staticmethod
+    def search_documents(es_host, es_port, doc_index, doc_type, source, size, query):
+
+        if doc_type is None:
+            url = 'http://%s:%s/%s/_search/' % (es_host, es_port, doc_index)
+
+        else:
+            url = 'http://%s:%s/%s/%s/_search/' % (es_host, es_port, doc_index, doc_type)
+
+        if size is None:
+            size = 10000
+
+        if query is None:
+            query = '{ "match_all" : {} } }'
+
+        body = '{ "_source": "%s", "size": %s, "query": %s' % (source, size, query)
+
+        resp = requests.get(url=url, headers=headers, data=body)
+
+        if resp.status_code == 200:
+            return resp.json()
+
+        elif resp.status_code == 400:
+            syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+            return 99
+
+        elif resp.status_code == 403:
+            syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+            return 99
+
+        elif resp.status_code == 404:
+            syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+            return 99
+
+        elif resp.status_code == 409:
+            syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+            return 99
+
+        elif resp.status_code == 412:
+            syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+            return 99
+
+        elif resp.status_code == 500:
+            syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+            return 99
+
+        elif resp.status_code == 503:
+            syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+            return 99
 
     @staticmethod
     def add_document(es_host, es_port, doc_index, doc_type, doc_id, doc):
 
         try:
-            headers = {'Accept': 'text/plain',
-                       'Content-type': 'application/json'}
 
             conn = httplib.HTTPConnection(es_host,
                                           es_port)
