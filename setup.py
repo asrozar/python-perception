@@ -38,4 +38,5 @@ setup(
                       'pika',
                       'xlsxwriter',
                       'pytz',
+                      'requests'
                       ])
