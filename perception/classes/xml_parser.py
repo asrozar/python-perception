@@ -230,7 +230,8 @@ def parse_openvas_xml(openvas_xml, *args):
 
         if len(host_list) == 1:
 
-            vuln_host = {'openvas_vuln_perception_product_uuid': system_uuid,
+            vuln_host = {'openvas_vuln_host': host_list[0],
+                         'openvas_vuln_perception_product_uuid': system_uuid,
                          'openvas_vuln_scan_timestamp': int(time.time()),
                          'vulns': vulnerability_list}
 
