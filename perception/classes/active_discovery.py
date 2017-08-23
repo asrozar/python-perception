@@ -75,7 +75,7 @@ class RunNmap(object):
             xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, cider, nmap_ts)
             port_scan = call([nmap,
                               '-sS',
-                              '-sV',
+                              '-A',
                               host,
                               '--open',
                               '-oX',
@@ -144,17 +144,21 @@ class BuildAsset(object):
         self.discovery_ts = discovery_ts
         self.hardware = hardware
 
-        self.profiler()
-
         t = threading.Thread(target=self.run)
         t.start()
 
-    def profiler(self):
+    @staticmethod
+    def profiler(cpe_list):
+
         oh_list = list()
         o = 0
         h = 0
 
-        for cpe in self.cpe_list:
+        for cpe in cpe_list:
+
+            if cpe == 'unknown':
+                continue
+
             cpe_split = cpe.split(':')
             cpe_type = cpe_split[1].lstrip('/')
 
@@ -195,8 +199,9 @@ class BuildAsset(object):
 
     def run(self):
         try:
+
             clean_name = None
-            os_cpe = self.profiler()
+            os_cpe = self.profiler(self.cpe_list)
 
             if os_cpe is not None:
                 os_cpe_split = os_cpe.split(':')
@@ -232,11 +237,17 @@ class BuildAsset(object):
             if clean_name is None:
                 clean_name = 'unknown'
 
+            if self.hardware is None:
+                hardware = 'unknown'
+
+            else:
+                hardware = self.hardware
+
             asset = {'address': self.address,
                      'name': self.name,
                      'os': clean_name.upper(),
                      'discovery_ts': self.discovery_ts,
-                     'hardware': self.hardware}
+                     'hardware': hardware}
 
             db_session = Sql.create_session()
 
@@ -358,7 +369,7 @@ class RunOpenVas(object):
                         delete_port_list(tcp_port_list_id, self.openvas_user_username,
                                          self.openvas_user_password)
 
-                        # delete the udp_port_list_id
+                    # delete the udp_port_list_id
                     if udp_port_list_id is not None:
                         delete_port_list(udp_port_list_id, self.openvas_user_username,
                                          self.openvas_user_password)
