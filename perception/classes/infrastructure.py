@@ -932,13 +932,12 @@ class InterrogateRSI(object):
 
         rsi_json_data = json.dumps(rsinfrastructure_dict)
 
-        if config.es_direct:
-            esearch.Elasticsearch.add_document(config.es_host,
-                                               config.es_port,
-                                               config.es_index,
-                                               'rsi',
-                                               str(rsi.id),
-                                               rsi_json_data)
+        esearch.Elasticsearch.add_document(config.es_host,
+                                           config.es_port,
+                                           config.es_index,
+                                           'rsi',
+                                           str(rsi.id),
+                                           rsi_json_data)
 
         if config.discovery_mode == 'active':
             for h in local_host_dict_list:
