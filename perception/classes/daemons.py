@@ -63,7 +63,14 @@ class MessageBroker(object):
             nm_host_list = ast.literal_eval(nm_host_list)
 
             for nm_host in nm_host_list:
-                RunNmap(nm_host, None, None, None, None, False, None, None)
+                RunNmap(nm_host,
+                        None,
+                        None,
+                        None,
+                        None,
+                        False,
+                        None,
+                        None)
 
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -74,8 +81,14 @@ class MessageBroker(object):
             if openvas_admin:
 
                 for ov_host in ov_host_list:
-
-                    RunNmap(ov_host, None, None, None, None, True, openvas_admin.username, openvas_admin.password)
+                    RunNmap(ov_host,
+                            None,
+                            None,
+                            None,
+                            None,
+                            True,
+                            openvas_admin.username,
+                            openvas_admin.password)
 
                 ch.basic_ack(delivery_tag=method.delivery_tag)
 
