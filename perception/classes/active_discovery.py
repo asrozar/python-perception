@@ -378,6 +378,7 @@ class RunOpenVas(object):
                     if xml_report_id is not None:
                         delete_reports(xml_report_id, self.openvas_user_username,
                                        self.openvas_user_password)
+            return 0
 
     def run(self):
 
