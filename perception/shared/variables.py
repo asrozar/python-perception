@@ -7,7 +7,7 @@ from perception.config import configuration as config
 home_dir = getenv('HOME')
 tmp_dir = '/tmp/perception/'
 rsinfrastructure_tmp_dir = '%srsinfrastructure/' % tmp_dir
-nmap_tmp_dir = '%snmap/' % tmp_dir
+xml_files = 'xml_files'
 db_config = {'drivername': config.db_drivername,
              'host': config.db_host,
              'database': config.database,
