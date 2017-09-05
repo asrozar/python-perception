@@ -633,9 +633,15 @@ class InterrogateRSI(object):
                         else:
                             vlan_id = mac_addrs_line_split[0]
 
+                        if len(mac_addrs_line_split) == 5:
+                            mac_table_port_index = 4
+
+                        else:
+                            mac_table_port_index = 3
+
                         mac_addr_dict = {'mac_table_mac_addr': mac_addrs_line_split[1],
                                          'mac_table_type': mac_addrs_line_split[2],
-                                         'mac_table_port': mac_addrs_line_split[3].strip('\r\n'),
+                                         'mac_table_port': mac_addrs_line_split[mac_table_port_index].strip('\r\n'),
                                          'mac_table_vlan': int(vlan_id)}
 
                         mac_dict_list.append(mac_addr_dict)
