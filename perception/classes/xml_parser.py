@@ -5,8 +5,6 @@ import time
 import re
 from socket import gethostbyaddr, herror
 from perception.config import configuration as config
-from perception.database.models import NmapHost, OpenVasVuln
-from sql import Sql
 from esearch import Elasticsearch
 import active_discovery
 from perception.shared.functions import get_product_uuid
@@ -113,8 +111,6 @@ def parse_openvas_xml(openvas_xml, *args):
 
     # parse get_reports_response
     if root.tag == 'get_reports_response':
-
-        openvas_db_session = Sql.create_session()
 
         results = root.iter('result')
         vulnerability_list = list()
@@ -230,15 +226,9 @@ def parse_openvas_xml(openvas_xml, *args):
 
         if len(host_list) == 1:
 
-            vuln_host = {'openvas_vuln_host': host_list[0],
-                         'openvas_vuln_perception_product_uuid': system_uuid,
+            vuln_host = {'openvas_vuln_perception_product_uuid': system_uuid,
                          'openvas_vuln_scan_timestamp': int(time.time()),
                          'vulns': vulnerability_list}
-
-            openvas_vuln = Sql.get_or_create(openvas_db_session,
-                                             OpenVasVuln,
-                                             ip_addr=host_list[0],
-                                             perception_product_uuid=system_uuid)
 
             openvas_json_data = json.dumps(vuln_host)
 
@@ -246,14 +236,12 @@ def parse_openvas_xml(openvas_xml, *args):
                                        config.es_port,
                                        config.es_index,
                                        'openvas',
-                                       str(openvas_vuln.id),
+                                       host_list[0],
                                        openvas_json_data)
 
-            openvas_db_session.close()
             return 0
 
         else:
-            openvas_db_session.close()
             return 99
 
 
@@ -269,7 +257,6 @@ def parse_nmap_xml(nmap_results):
 
     try:
         #  Find all the hosts in the nmap scan
-        nmap_db_session = Sql.create_session()
         ov_scan_pkg = list()
 
         for host in root.findall('host'):
@@ -577,10 +564,6 @@ def parse_nmap_xml(nmap_results):
                     ip_addr = ipv6
 
                 if ip_addr is not None:
-                    nmap_host = Sql.get_or_create(nmap_db_session,
-                                                  NmapHost,
-                                                  ip_addr=ip_addr,
-                                                  perception_product_uuid=system_uuid)
 
                     nmap_json_data = json.dumps(host_dict)
 
@@ -588,12 +571,11 @@ def parse_nmap_xml(nmap_results):
                                                config.es_port,
                                                config.es_index,
                                                'nmap',
-                                               str(nmap_host.id),
+                                               ip_addr,
                                                nmap_json_data)
 
                     active_discovery.BuildAsset(ip_addr, host_name, cpe_list, nmap_ts, mac_vendor)
 
-        nmap_db_session.close()
         return ov_scan_pkg
 
     except Exception as nmap_xml_e:
