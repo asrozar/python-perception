@@ -936,6 +936,7 @@ class InterrogateRSI(object):
         rsinfrastructure_dict['rsi_mac_table'] = mac_dict_list
         rsinfrastructure_dict['rsi_discovery_protocol'] = discovery_dict_list
         rsinfrastructure_dict['rsi_perception_product_uuid'] = system_uuid
+        rsinfrastructure_dict['rsi_mgnt_ip_addr'] = ip_addr
 
         rsi_json_data = json.dumps(rsinfrastructure_dict)
 
