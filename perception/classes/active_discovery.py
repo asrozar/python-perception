@@ -59,7 +59,7 @@ class RunNmap(object):
 
             if mac is None or adjacency_switch is None or adjacency_int is None:
 
-                # TODO - HSRP may be jacking this up (lookup 10.14.46.40)
+                # TODO - HSRP will jack this up (lookup 10.14.46.40)
 
                 query = '{"match_phrase":{ "rsi_local_hosts.local_host_ip_addr" : "%s" }}}' % host
 
@@ -74,14 +74,25 @@ class RunNmap(object):
                                                       None,
                                                       query)
 
-                for x in docs['hits']['hits']:
+                try:
+                    for x in docs['hits']['hits']:
 
-                    for rsi_local_hosts in x['_source']['rsi_local_hosts']:
+                        for rsi_local_hosts in x['_source']['rsi_local_hosts']:
 
-                        if rsi_local_hosts['local_host_ip_addr'] == host:
-                            mac = rsi_local_hosts['local_host_mac_addr']
-                            adjacency_int = rsi_local_hosts['local_host_adjacency_int']
-                            adjacency_switch = x['_id']
+                            if rsi_local_hosts['local_host_ip_addr'] == host:
+                                mac = rsi_local_hosts['local_host_mac_addr']
+                                adjacency_int = rsi_local_hosts['local_host_adjacency_int']
+
+                                rsi_get_addr = Elasticsearch.get_document(config.es_host,
+                                                                          config.es_port,
+                                                                          config.es_index,
+                                                                          'rsi',
+                                                                          x['_id'])
+
+                                adjacency_switch = rsi_get_addr['_source']['rsi_mgnt_ip_addr']
+
+                except Exception as rsi_lookup:
+                    syslog.syslog(syslog.LOG_INFO, 'rsi_lookup error: %s' % rsi_lookup)
 
             xml_file = '%s/%s.xml.%d' % (xml_files, host, nmap_ts)
             port_scan = call([nmap,
