@@ -1,11 +1,9 @@
 from os import makedirs, devnull, path, remove
 from subprocess import Popen, PIPE, call
 from perception.config import configuration as config
-from perception.database.models import Asset
 from perception.shared.functions import get_product_uuid
-from perception.shared.variables import nmap_tmp_dir
+from perception.shared.variables import xml_files
 from xml_parser import parse_nmap_xml
-from sql import Sql
 from esearch import Elasticsearch
 from openvas import create_port_list,\
     create_target,\
@@ -58,7 +56,34 @@ class RunNmap(object):
         nmap_ts = int(time.time())
 
         if addr_type == 'host':
-            xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, host, nmap_ts)
+
+            if mac is None or adjacency_switch is None or adjacency_int is None:
+
+                # TODO - HSRP may be jacking this up (lookup 10.14.46.40)
+
+                query = '{"match_phrase":{ "rsi_local_hosts.local_host_ip_addr" : "%s" }}}' % host
+
+                # lookup this info in ES
+                docs = Elasticsearch.search_documents(config.es_host,
+                                                      config.es_port,
+                                                      config.es_index,
+                                                      'rsi',
+                                                      ["rsi_local_hosts.local_host_mac_addr",
+                                                       "rsi_local_hosts.local_host_ip_addr",
+                                                       "rsi_local_hosts.local_host_adjacency_int"],
+                                                      None,
+                                                      query)
+
+                for x in docs['hits']['hits']:
+
+                    for rsi_local_hosts in x['_source']['rsi_local_hosts']:
+
+                        if rsi_local_hosts['local_host_ip_addr'] == host:
+                            mac = rsi_local_hosts['local_host_mac_addr']
+                            adjacency_int = rsi_local_hosts['local_host_adjacency_int']
+                            adjacency_switch = x['_id']
+
+            xml_file = '%s/%s.xml.%d' % (xml_files, host, nmap_ts)
             port_scan = call([nmap,
                               '-sS',
                               '-A',
@@ -72,7 +97,7 @@ class RunNmap(object):
 
         if addr_type == 'cider':
             cider = host.replace('/', '_')
-            xml_file = '%s%s.xml.%d' % (nmap_tmp_dir, cider, nmap_ts)
+            xml_file = '%s/%s.xml.%d' % (xml_files, cider, nmap_ts)
             port_scan = call([nmap,
                               '-sS',
                               '-A',
@@ -92,9 +117,9 @@ class RunNmap(object):
     def run(self):
 
         try:
-            makedirs(nmap_tmp_dir)
+            makedirs(xml_files)
         except OSError as os_e:
-            if os_e.errno == 17 and path.isdir(nmap_tmp_dir):
+            if os_e.errno == 17 and path.isdir(xml_files):
                 pass
             else:
                 syslog.syslog(syslog.LOG_INFO, str(os_e))
@@ -125,7 +150,9 @@ class RunNmap(object):
 
                 else:
                     scn_pkg_list = parse_nmap_xml(nmap_scan_xml_path)
-                    remove(nmap_scan_xml_path[0])
+
+                    if config.delete_nmap is not False:
+                        remove(nmap_scan_xml_path[0])
 
                     if self.vuln_scan is True and self.openvas_user_username and self.openvas_user_password:
 
@@ -243,18 +270,11 @@ class BuildAsset(object):
             else:
                 hardware = self.hardware
 
-            asset = {'address': self.address,
-                     'name': self.name,
+            asset = {'name': self.name,
                      'os': clean_name.upper(),
                      'discovery_ts': self.discovery_ts,
-                     'hardware': hardware}
-
-            db_session = Sql.create_session()
-
-            assets = Sql.get_or_create(db_session,
-                                       Asset,
-                                       ip_addr=self.address,
-                                       perception_product_uuid=system_uuid)
+                     'hardware': hardware,
+                     'asset_perception_product_uuid': system_uuid}
 
             nmap_json_data = json.dumps(asset)
 
@@ -262,9 +282,8 @@ class BuildAsset(object):
                                        config.es_port,
                                        config.es_index,
                                        'assets',
-                                       str(assets.id),
+                                       self.address,
                                        nmap_json_data)
-            db_session.close()
 
         except Exception as BuildAsset_error:
             syslog.syslog(syslog.LOG_INFO, 'BuildAsset error: %s' % str(BuildAsset_error))
