@@ -37,7 +37,14 @@ class Elasticsearch(object):
         if query is None:
             query = '{ "match_all" : {} } }'
 
-        body = '{ "_source": "%s", "size": %s, "query": %s' % (source, size, query)
+        if source:
+            body = '{ "_source": true, "size": %s, "query": %s' % (size, query)
+
+        elif source is False:
+            body = '{ "_source": false, "size": %s, "query": %s' % (size, query)
+
+        else:
+            body = '{ "_source": "%s", "size": %s, "query": %s' % (source, size, query)
 
         resp = requests.get(url=url, headers=headers, data=body)
 
@@ -71,6 +78,46 @@ class Elasticsearch(object):
         elif resp.status_code == 503:
             syslog.syslog(syslog.LOG_INFO, str(resp.json()))
             return 99
+
+    @staticmethod
+    def get_document(es_host, es_port, doc_index, doc_type, doc_id):
+        try:
+            url = 'http://%s:%s/%s/%s/%s/' % (es_host, es_port, doc_index, doc_type, doc_id)
+            resp = requests.get(url=url, headers=headers)
+
+            if resp.status_code == 200:
+                return resp.json()
+
+            elif resp.status_code == 400:
+                syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+                return 99
+
+            elif resp.status_code == 403:
+                syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+                return 99
+
+            elif resp.status_code == 404:
+                syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+                return 99
+
+            elif resp.status_code == 409:
+                syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+                return 99
+
+            elif resp.status_code == 412:
+                syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+                return 99
+
+            elif resp.status_code == 500:
+                syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+                return 99
+
+            elif resp.status_code == 503:
+                syslog.syslog(syslog.LOG_INFO, str(resp.json()))
+                return 99
+
+        except Exception as get_document_e:
+            syslog.syslog(syslog.LOG_INFO, 'es_add_document error: %s' % str(get_document_e))
 
     @staticmethod
     def add_document(es_host, es_port, doc_index, doc_type, doc_id, doc):
